@@ -132,7 +132,7 @@ NEXTAUTH_SECRET  ✅
 ### Fix #1: Create RESEND_API_KEY Secret ✅
 **Command:**
 ```bash
-echo "re_6LmLHJ4p_JKmSyMwp1ScWLddn7WcZQskp" | \
+echo "REDACTED_RESEND_KEY" | \
   gcloud secrets create RESEND_API_KEY \
     --data-file=- \
     --project=hustleapp-production

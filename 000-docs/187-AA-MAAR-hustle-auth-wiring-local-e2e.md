@@ -61,11 +61,11 @@ NEXT_PUBLIC_API_DOMAIN=http://localhost:4000    # ⚠️ Port mismatch (server o
 NEXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:4000
 
 # NextAuth Configuration (LEGACY)
-NEXTAUTH_SECRET="9hZOv+O5/XWuGMOp2KJo4z6e4k+ld+W+ItkgVnxaojM="
+NEXTAUTH_SECRET="REDACTED_NEXTAUTH_SECRET"
 NEXTAUTH_URL="http://localhost:4000"
 
 # Email Configuration (Resend)
-RESEND_API_KEY="re_6LmLHJ4p_JKmSyMwp1ScWLddn7WcZQskp"
+RESEND_API_KEY="REDACTED_RESEND_KEY"
 EMAIL_FROM="HUSTLE <noreply@intentsolutions.io>"
 ```
 
