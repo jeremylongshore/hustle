@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security — 2026-09-13
+
+- Complete the September 7 credential-scrub repair from PR #49: remove the
+  remaining Resend literals from three historical documents, preserving the
+  prior repair's adjacent NextAuth and archived Groq redactions.
+- Add a blocking, secret-safe Resend scan to CI, pre-merge validation and the
+  deployment build gate. The scan includes tracked documentation and archives;
+  13 hermetic regressions cover detection, staged-content integrity and errors.
+- Exclude private dotenv files from Docker build contexts, including nested
+  archives; preserve public `.env.example` templates. A real scratch-image
+  regression proves the old context included private files and the repair excludes them.
+- Isolate game-query unit tests from the CI job-wide E2E flag and explicitly
+  cover enabled-mode verification. The old two failures reproduce; all 822
+  application unit tests pass after the correction.
+- Record why the earlier repair did not reach main, independently verified
+  rejection of both reported keys, and the separate empty production email
+  configuration in [the incident report](000-docs/6783-AA-INC-resend-secret-exposure.md).
+  Historical Git objects remain; credential rejection does not prove past misuse
+  did not occur. Application email delivery is not claimed restored by this scrub.
+
+
 ### Added
 - **ADK Documentation Crawler Pipeline**: Production-grade infrastructure for crawling Google ADK docs
   - Complete Python package in `tools/adk_docs_crawler/` with 8 modules

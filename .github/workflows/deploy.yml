@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Reject tracked Resend credentials before deployment
+        run: python3 scripts/check-resend-secrets.py
       - uses: actions/setup-node@v4
         with:
           node-version: "22"

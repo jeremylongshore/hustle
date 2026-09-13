@@ -14,6 +14,9 @@ describe("games query module", () => {
   let qm: typeof import("./games");
 
   beforeEach(async () => {
+    // CI also builds the E2E application in this job. Unit tests exercise
+    // normal verification regardless of the surrounding job's E2E flag.
+    vi.stubEnv("NEXT_PUBLIC_E2E_TEST_MODE", "false");
     vi.resetModules();
     const made = makeTestDb();
     testDb = made.db;
@@ -26,6 +29,7 @@ describe("games query module", () => {
   afterEach(() => {
     close();
     vi.doUnmock("@/lib/db");
+    vi.unstubAllEnvs();
   });
 
   it("create + get + verify lifecycle", async () => {
@@ -94,5 +98,23 @@ describe("games query module", () => {
     expect(all).toHaveLength(1);
     expect(all[0].player.id).toBe(playerId);
     expect(all[0].player.name).toBe("Test Player");
+  });
+
+  it("auto-verifies only when E2E mode is explicitly enabled", async () => {
+    vi.stubEnv("NEXT_PUBLIC_E2E_TEST_MODE", "true");
+    const created = await qm.createGameAdmin(userId, playerId, {
+      workspaceId,
+      date: new Date("2026-05-01"),
+      opponent: "E2E fixture",
+      result: "Win",
+      finalScore: "1-0",
+      minutesPlayed: 60,
+    });
+
+    expect(created.verified).toBe(true);
+    const persisted = await qm.getGameAdmin(userId, playerId, created.id);
+    expect(persisted?.verified).toBe(true);
+    expect(persisted?.verifiedAt).toBeInstanceOf(Date);
+    expect(await qm.getUnverifiedGamesCountAdmin(userId)).toBe(0);
   });
 });

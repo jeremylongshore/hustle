@@ -8,6 +8,11 @@ README.md
 .gitignore
 claudes-docs
 
+# Runtime credentials belong outside build layers, including archived subprojects.
+**/.env
+**/.env.*
+!**/.env.example
+
 # Phase 4.5g: vendored sub-projects at repo root with broken symlinks /
 # their own toolchains — exclude from the Next.js build context.
 nwsl
