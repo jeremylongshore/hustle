@@ -32,8 +32,13 @@ beforeEach(async () => {
   mockDbModule(testDb);
   vi.clearAllMocks();
 
-  process.env.RESEND_API_KEY = "test_key";
-  process.env.EMAIL_FROM = "noreply@hustleapp.co";
+  vi.stubEnv('RESEND_API_KEY', undefined);
+  vi.stubEnv('SMTP_HOST', 'smtp.example.invalid');
+  vi.stubEnv('SMTP_PORT', '465');
+  vi.stubEnv('SMTP_SECURE', 'true');
+  vi.stubEnv('SMTP_USER', 'fixture@example.invalid');
+  vi.stubEnv('SMTP_PASS', 'fixture-password');
+  vi.stubEnv('EMAIL_FROM', 'fixture@example.invalid');
 
   mocks.emailVerification.mockReturnValue({
     subject: "Verify",
@@ -45,6 +50,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   closeDb();
+  vi.unstubAllEnvs();
   vi.resetModules();
 });
 
@@ -63,7 +69,7 @@ describe("POST /api/auth/resend-verification", () => {
   });
 
   it("returns 503 when email service is unconfigured", async () => {
-    delete process.env.RESEND_API_KEY;
+    vi.stubEnv("SMTP_PASS", "");
     const { POST } = await import("./route");
     const res = await POST(buildReq({ email: TEST_EMAIL }));
     expect(res.status).toBe(503);
@@ -96,7 +102,7 @@ describe("POST /api/auth/resend-verification", () => {
     expect(mocks.sendEmail).not.toHaveBeenCalled();
   });
 
-  it("issues a token + sends email for unverified user", async () => {
+  it("issues a token and sends with SMTP configured and no Resend key", async () => {
     const now = new Date();
     await testDb.insert(authSchema.users).values({
       id: "u2",

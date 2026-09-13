@@ -17,3 +17,7 @@ claudes-docs
 # their own toolchains — exclude from the Next.js build context.
 nwsl
 mobile
+
+# Per-run browser databases and authenticated storage must stay private.
+03-Tests/e2e/.runtime
+03-Tests/e2e/.auth

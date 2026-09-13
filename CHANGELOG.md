@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — application email transport, 2026-09-13
+
+- Route verification, password reset and notification mail through the existing
+  approved MXroute SMTP sender. Remove the empty Resend dependency and the
+  hardcoded onboarding sender; preserve application return shapes and tokens.
+- Require validated TLS and bounded transport timeouts, expose sanitized
+  failures, and avoid retrying ambiguous SMTP submissions automatically.
+- Add a no-send authentication readiness endpoint with a sixty-second bounded
+  cache, separate from process liveness. Deployment smoke verifies this signal;
+  missing email configuration now produces an honest degraded health response.
+- Add unit, fake-clock, SQLite route and real local TLS SMTP fixture regressions.
+  Document deployment, protected backups, limits of no-send verification and
+  rollback in [the email runbook](000-docs/6784-OD-RUNB-smtp-email-operations.md).
+
 ### Security — 2026-09-13
 
 - Complete the September 7 credential-scrub repair from PR #49: remove the
