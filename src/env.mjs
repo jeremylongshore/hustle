@@ -26,8 +26,12 @@ const envSchema = z.object({
   MAILER_KEY: z.string().optional(),
   MAILER_FROM: z.string().email().optional(),
 
-  // Optional: Resend Email
-  RESEND_API_KEY: z.string().optional(),
+  // SMTP is validated at the email boundary; builds do not need credentials.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
 
   // Optional: File Upload

@@ -14,8 +14,19 @@ services:
       AUTH_TRUST_HOST: "true"
       DATABASE_PATH: /data/hustle.db
       UPLOADS_DIR: /data/uploads
-      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       APP_ORIGIN: ${APP_ORIGIN:-https://hustlestats.io}
+      BILLING_ENABLED: ${BILLING_ENABLED:?BILLING_ENABLED must be explicitly true or false}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER:-}
+      STRIPE_PRICE_ID_PLUS: ${STRIPE_PRICE_ID_PLUS:-}
+      STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO:-}
     ports:
       - "127.0.0.1:8084:8084"
     volumes:

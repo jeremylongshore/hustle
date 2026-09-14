@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
+import { emailConfiguration } from '@/lib/smtp';
 import { withTimeout } from '@/lib/utils/timeout';
 
 const logger = createLogger('api/health');
@@ -32,6 +33,7 @@ interface HealthCheckResult {
       error?: string;
       reason?: string;
     };
+    email: ReturnType<typeof emailConfiguration>;
     environment: {
       status: 'pass' | 'fail';
       missing?: string[];
@@ -50,6 +52,7 @@ export async function GET() {
     environment: process.env.NODE_ENV || 'development',
     service: 'hustle-api',
     checks: {
+      email: emailConfiguration(),
       database: {
         status: 'pass',
       },
@@ -110,11 +113,9 @@ export async function GET() {
     criticalEnvVars.push('STRIPE_SECRET_KEY');
   }
 
-  // Optional env vars — app can function without these (degraded mode).
-  const optionalEnvVars = ['RESEND_API_KEY', 'EMAIL_FROM'];
+  // Email verification and password reset require a configured SMTP sender.
 
   const missingCritical = criticalEnvVars.filter((envVar) => !process.env[envVar]);
-  const missingOptional = optionalEnvVars.filter((envVar) => !process.env[envVar]);
 
   if (missingCritical.length > 0) {
     result.checks.environment = {
@@ -123,18 +124,15 @@ export async function GET() {
     };
     result.status = 'unhealthy';
     logger.error(`Missing critical environment variables: ${missingCritical.join(', ')}`);
-  } else if (missingOptional.length > 0) {
-    result.checks.environment = {
-      status: 'pass',
-    };
-    logger.warn(
-      `Missing optional environment variables (email disabled): ${missingOptional.join(', ')}`
-    );
+  }
+
+  if (!result.checks.email.configured && result.status !== 'unhealthy') {
+    result.status = 'degraded';
   }
 
   result.latencyMs = Date.now() - startTime;
 
-  const httpStatus = result.status === 'unhealthy' ? 503 : 200;
+  const httpStatus = result.status === 'unhealthy' || !result.checks.email.configured ? 503 : 200;
 
   logger.info('Health check completed', {
     event: 'health_check',
@@ -146,5 +144,5 @@ export async function GET() {
     timestamp: result.timestamp,
   });
 
-  return NextResponse.json(result, { status: httpStatus });
+  return NextResponse.json(result, { status: httpStatus, headers: { 'Cache-Control': 'no-store' } });
 }
