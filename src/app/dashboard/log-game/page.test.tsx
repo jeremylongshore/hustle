@@ -60,6 +60,6 @@ it('prevents future dates before a request can be submitted', async () => {
   const field = await fillBase('defender');
   fireEvent.change(field('date'), { target: { value: '2999-01-01' } });
   await act(async () => fireEvent.click(screen.getByRole('button', { name: /save game/i })));
-  expect(screen.getByText('Game date cannot be in the future')).toBeVisible();
+  await waitFor(() => expect(screen.getByText('Game date cannot be in the future')).toBeVisible());
   expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0);
 });
