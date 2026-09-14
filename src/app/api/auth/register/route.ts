@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, verificationTokens } from "@/lib/db/schema/auth";
+import { users } from "@/lib/db/schema/auth";
+import { registerUserWithWorkspace, RegistrationConflictError } from "@/lib/db/provision-user-workspace";
 import { sendVerificationEmail } from "@/lib/resend";
 
 export const dynamic = "force-dynamic";
@@ -42,17 +43,20 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const [user] = await db
-    .insert(users)
-    .values({ email, name, passwordHash })
-    .returning();
-
   const token = crypto.randomBytes(32).toString("base64url");
-  await db.insert(verificationTokens).values({
-    identifier: email,
-    token,
-    expires: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
-  });
+  let userId: string;
+  try {
+    ({ userId } = registerUserWithWorkspace({
+      email, name, passwordHash, token,
+      tokenExpiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+    }));
+  } catch (error) {
+    if (error instanceof RegistrationConflictError) {
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    }
+    console.error("[register] account provisioning transaction failed");
+    return NextResponse.json({ error: "Registration could not be completed" }, { status: 500 });
+  }
 
   const verifyLink = `${appOrigin(req)}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
 
@@ -63,5 +67,5 @@ export async function POST(req: NextRequest) {
     // Don't fail the request — user exists; they can request resend.
   }
 
-  return NextResponse.json({ ok: true, userId: user.id });
+  return NextResponse.json({ ok: true, userId });
 }

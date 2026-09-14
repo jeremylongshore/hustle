@@ -21,6 +21,12 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       APP_ORIGIN: ${APP_ORIGIN:-https://hustlestats.io}
+      BILLING_ENABLED: ${BILLING_ENABLED:?BILLING_ENABLED must be explicitly true or false}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER:-}
+      STRIPE_PRICE_ID_PLUS: ${STRIPE_PRICE_ID_PLUS:-}
+      STRIPE_PRICE_ID_PRO: ${STRIPE_PRICE_ID_PRO:-}
     ports:
       - "127.0.0.1:8084:8084"
     volumes:

@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* Restrict Tailwind's automatic scan to src/. The repository also contains
+   an operator reference symlink outside the project root; following it makes
+   Turbopack abort before either dev or browser tests can start. */
+@import "tailwindcss" source("..");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const COOKIE_NAME = '__session';
+import { getToken } from 'next-auth/jwt';
 
 const publicRoutes = [
   '/',
@@ -28,7 +27,7 @@ const publicPrefixes = [
   '/animations/',
 ];
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -40,11 +39,23 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie = request.cookies.get(COOKIE_NAME);
+  // Auth.js issues encrypted JWT cookies. The former Firebase __session
+  // presence check rejected valid logins and accepted arbitrary old cookies.
+  // Route handlers still perform their own session/user authorization.
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    console.error(JSON.stringify({ event: 'auth_proxy_unready', reason: 'missing_secret' }));
+    return NextResponse.json({ error: 'Authentication temporarily unavailable' }, { status: 503 });
+  }
+  const session = await getToken({
+    req: request,
+    secret,
+    secureCookie: request.nextUrl.protocol === 'https:',
+  });
 
-  if (!sessionCookie?.value) {
+  if (!session?.sub) {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set('callbackUrl', pathname + request.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 

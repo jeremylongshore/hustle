@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { safeLoginRedirect } from '@/lib/auth-redirect';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -19,26 +20,34 @@ function LoginPageContent() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
+    let deadline: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        signIn('credentials', { email, password, redirect: false }),
+        new Promise<never>((_, reject) => {
+          deadline = setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 15_000);
+        }),
+      ]);
 
-    setLoading(false);
-
-    if (!result || result.error) {
-      const err = result?.error ?? '';
-      if (err.includes('EMAIL_NOT_VERIFIED')) {
-        setError('Please verify your email before signing in. Check your inbox for the verification link.');
-      } else {
-        setError('Invalid email or password.');
+      if (!result || result.error) {
+        const err = result?.error ?? '';
+        if (err.includes('EMAIL_NOT_VERIFIED')) {
+          setError('Please verify your email before signing in. Check your inbox for the verification link.');
+        } else {
+          setError('Invalid email or password.');
+        }
+        return;
       }
-      return;
+      // Accept only a relative in-app destination from the query string.
+      router.push(safeLoginRedirect(callbackUrl));
+    } catch (error) {
+      setError(error instanceof Error && error.message === 'LOGIN_TIMEOUT'
+        ? 'Sign-in timed out. Please try again.'
+        : 'Unable to sign in right now. Please try again.');
+    } finally {
+      if (deadline) clearTimeout(deadline);
+      setLoading(false);
     }
-
-    router.push(callbackUrl);
-    router.refresh();
   };
 
   return (
@@ -63,10 +72,11 @@ function LoginPageContent() {
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
             <div>
-              <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                 Email
               </label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -77,10 +87,11 @@ function LoginPageContent() {
               />
             </div>
             <div>
-              <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                 Password
               </label>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

@@ -36,10 +36,7 @@ test.describe('Dream Gym - Onboarding', () => {
   test('should navigate to Dream Gym and see content', async ({ page }) => {
     const athleteId = await navigateToDreamGym(page);
 
-    if (!athleteId) {
-      console.log('⚠ No athlete found - skipping test');
-      return;
-    }
+    expect(athleteId, 'the fixture athlete must be available').toBeTruthy();
 
     // Should show Dream Gym content
     const pageContent = await page.locator('body').textContent();
@@ -140,10 +137,7 @@ test.describe('Dream Gym - AI Strategy', () => {
     // Click first athlete
     const athleteLink = page.locator('a[href*="/athletes/"]').first();
 
-    if (!await athleteLink.isVisible({ timeout: 10000 }).catch(() => false)) {
-      console.log('⚠ No athlete found - skipping test');
-      return;
-    }
+    await expect(athleteLink, 'fixture athlete must be available').toBeVisible();
 
     await athleteLink.click();
     await page.waitForURL(/.+\/athletes\/.+/, { timeout: 30000 });
@@ -245,7 +239,7 @@ test.describe('Dream Gym - Navigation', () => {
     }
 
     // All sections should be accessible when authenticated
-    expect(accessibleSections).toBeGreaterThan(0);
+    expect(accessibleSections).toBe(sections.length);
   });
 
   test('should navigate back to dashboard', async ({ page }) => {

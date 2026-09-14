@@ -39,6 +39,14 @@ semantics. An operator must not resend arbitrary user messages as a health test.
 mail configuration as degraded with HTTP 503. Other checks, including existing
 billing configuration, keep their own meaning.
 
+Production billing mode must be explicit. Set `BILLING_ENABLED=false` when
+Stripe is not configured; core plan limits continue to operate and billing
+routes return their documented unavailable response. Set it to `true` only
+when the Stripe secret, webhook secret and all three price IDs are present in
+the private VPS environment. Compose passes those names into the container,
+but the repository must never contain their values. Monitor both `/api/healthz`
+and `/api/health`; liveness cannot clear a deeper readiness failure.
+
 `GET /api/health/email` verifies DNS, TCP, TLS and SMTP authentication without
 MAIL, RCPT or DATA submission. It returns HTTP 200 only for `status=pass`,
 `transport=smtp`, `check=tls-authentication`, with `checkedAt` and `validUntil`.

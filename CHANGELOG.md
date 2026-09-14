@@ -22,6 +22,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add unit, fake-clock, SQLite route and real local TLS SMTP fixture regressions.
   Document deployment, protected backups, limits of no-send verification and
   rollback in [the email runbook](000-docs/6784-OD-RUNB-smtp-email-operations.md).
+- Make production billing mode explicit and pass the complete Stripe variable
+  set through Compose. This prevents `/api/healthz` liveness from concealing an
+  implicitly enabled but unconfigured billing subsystem; billing remains
+  deliberately disabled until its private credentials are provisioned.
+
+### Reliability — 2026-09-13
+
+- Complete the Auth.js request-guard migration, accepting verified encrypted
+  sessions and rejecting forged/expired cookies. Preserve in-app return paths.
+- Recover the login form after a 15-second deadline or network error; the old
+  fake-clock test fails and the repaired behavior passes. Remove the redundant
+  post-login refresh that could later remount a dashboard form and discard input.
+- Restore transactional account/workspace provisioning and preserve original
+  trial and billing state when reconciling migrated orphan accounts.
+- Restore the declared Playwright dependency and real local Auth.js/SQLite
+  browser fixtures, with token verification, isolated state, fail-closed builds
+  and private artifacts excluded from container images. Retain existing user
+  journey assertions while correcting obsolete form selectors.
+- Keep E2E SQLite writes outside the watched Next.js source tree, wait for client
+  route transitions before entering game data, and remove guarded temp databases
+  during global teardown. The final production-built Chromium replay passes all
+  87 scenarios sequentially with retries disabled.
+- Restore the previously empty integration lane with 16 transactional SQLite
+  provisioning cases and make it blocking in CI. Type checking, unit tests and
+  Chromium E2E are blocking again; the separately classified unit lane passes
+  858 tests.
+- Scope Tailwind v4 source discovery to `src/`, exclude runtime upload paths from
+  Turbopack file tracing, and preserve Next's framework-controlled dynamic-render
+  exceptions through application authentication catches.
+- Record demonstrated migration failures, regression evidence and verification
+  boundaries in [the browser incident report](000-docs/6785-AA-INC-auth-migration-browser-regressions.md).
 
 ### Security — 2026-09-13
 

@@ -47,3 +47,4 @@ next-env.d.ts
 # Phase 4.5g: vendored sub-project at repo root; Turbopack chokes on its
 # nwsl/archive_*/venv-videos/bin/python symlinks during file tracing.
 /nwsl
+03-Tests/e2e/.runtime/
