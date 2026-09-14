@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { isPastOrTodayDate } from '@/lib/validations/athlete-date';
 import { createLogger } from '@/lib/logger';
 import { createPlayerAdmin } from '@/lib/db/queries/players';
 import { getUserProfileAdmin } from '@/lib/db/queries/users';
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         { error: 'MISSING_REQUIRED_FIELDS', message: 'Please fill in all required fields: name, birthday, position, team/club, gender, and league.' },
+        { status: 400 }
+      );
+    }
+
+    if (!isPastOrTodayDate(birthday)) {
+      return NextResponse.json(
+        { error: 'INVALID_BIRTHDAY', message: 'Date of birth must be a valid date and cannot be in the future.' },
         { status: 400 }
       );
     }

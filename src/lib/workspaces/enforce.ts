@@ -86,8 +86,17 @@ export function assertWorkspaceActive(workspace: Workspace): void {
         workspace.status
       );
 
+    case 'trial': {
+      // Older orphan accounts keep their original trial deadline on recovery.
+      // Status alone must not grant them indefinite write access.
+      // A null deadline retains the existing guards.ts legacy policy.
+      const deadline = workspace.trialEndsAt?.getTime();
+      if (deadline !== undefined && (!Number.isFinite(deadline) || deadline <= Date.now())) {
+        throw new WorkspaceAccessError('TRIAL_EXPIRED', workspace.status);
+      }
+      return;
+    }
     case 'active':
-    case 'trial':
       // Allowed statuses - no action needed
       return;
 

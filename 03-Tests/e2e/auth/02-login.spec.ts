@@ -12,6 +12,7 @@ import { test, expect } from '@playwright/test'
  */
 
 test.describe('User Login Flow', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
   test.beforeEach(async ({ page }) => {
     // Navigate directly to login page
     await page.goto('/login')
@@ -29,7 +30,7 @@ test.describe('User Login Flow', () => {
     await expect(page.locator('text=/forgot.*password/i')).toBeVisible()
 
     // Should have "Create Account" link
-    await expect(page.locator('text=/create.*account/i')).toBeVisible()
+    await expect(page.locator('text=/sign.*up/i')).toBeVisible()
   })
 
   test('should validate required fields', async ({ page }) => {
@@ -46,16 +47,15 @@ test.describe('User Login Flow', () => {
     await page.fill('input#password', 'WrongPassword123!')
     await page.click('button[type="submit"]')
 
-    // Should show error message (NextAuth shows "Configuration" error)
-    const errorMessage = page.locator('text=/configuration|invalid.*credentials|incorrect/i')
-    await expect(errorMessage).toBeVisible({ timeout: 10000 })
+    // Keep the public response generic so account existence is not disclosed.
+    await expect(page.getByText('Invalid email or password.', { exact: true })).toBeVisible({ timeout: 10000 })
 
     // Should stay on login page
     await expect(page).toHaveURL('/login')
   })
 
-  // Skip in E2E mode - we intentionally bypass email verification for test reliability
-  test.skip('should show error for unverified email', async ({ page }) => {
+  // The actual credentials provider must reject an unverified fixture account.
+  test('should reject an unverified email without disclosing account state', async ({ page }) => {
     // First, register a new user (which won't be verified)
     await page.goto('/register')
 
@@ -66,22 +66,20 @@ test.describe('User Login Flow', () => {
     await page.fill('input#firstName', 'Unverified')
     await page.fill('input#lastName', 'User')
     await page.fill('input#email', testEmail)
-    await page.fill('input#phone', '5550000000')
     await page.fill('input#confirmPassword', testPassword)
     await page.fill('input#password', testPassword)
     await page.click('button[type="submit"]')
 
     // Wait for registration to complete (redirects to login)
-    await expect(page).toHaveURL(/\/login/, { timeout: 10000 })
+    await expect(page).toHaveURL(/\/verify-email/, { timeout: 10000 })
+    await page.goto('/login')
 
     // Now try to login with unverified account
     await page.fill('input#email', testEmail)
     await page.fill('input#password', testPassword)
     await page.click('button[type="submit"]')
 
-    // Should show error message (NextAuth shows "Configuration" for invalid login)
-    const errorMessage = page.locator('text=/configuration|invalid.*credentials|verify.*email/i')
-    await expect(errorMessage).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Invalid email or password.', { exact: true })).toBeVisible({ timeout: 10000 })
 
     // Should stay on login page
     await expect(page).toHaveURL('/login')
@@ -92,12 +90,12 @@ test.describe('User Login Flow', () => {
     await page.click('text=/forgot.*password/i')
 
     // Should navigate to forgot password page
-    await expect(page).toHaveURL('/forgot-password')
+    await expect(page).toHaveURL('/reset-password')
   })
 
   test('should navigate to registration page', async ({ page }) => {
     // Click "Create Account" link
-    await page.click('text=/create.*account/i')
+    await page.click('text=/sign.*up/i')
 
     // Should navigate to registration page
     await expect(page).toHaveURL('/register')
@@ -120,7 +118,6 @@ test.describe('User Login Flow', () => {
 
     // Form should submit (even though credentials are wrong, it should try)
     // We'll get an error, but that proves the form submitted
-    const errorOrRedirect = page.locator('text=/invalid|incorrect|dashboard/i')
-    await expect(errorOrRedirect).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('Invalid email or password.', { exact: true })).toBeVisible({ timeout: 10000 })
   })
 })

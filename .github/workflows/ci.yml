@@ -19,6 +19,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Reject tracked Resend credentials
+        run: |
+          python3 -m unittest discover -s scripts -p test_check_resend_secrets.py -v
+          python3 scripts/check-resend-secrets.py
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,20 +45,17 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true  # Pre-existing type debt - don't block CI
 
       - name: Build application
         run: npm run build
 
       - name: Run unit tests
         run: npm run test:unit
-        continue-on-error: true  # Some tests need STRIPE_SECRET_KEY and better mocks
         env:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Run integration tests
         run: npm run test:integration
-        continue-on-error: true  # Re-stabilize integration tests on Postgres/Drizzle (post-migration)
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -61,7 +63,6 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e -- --project=chromium
-        continue-on-error: true  # Re-stabilize E2E on Postgres/local-FS (post-migration)
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:4000
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
@@ -76,7 +77,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: 03-Tests/playwright-report/
+          path: 03-Tests/e2e/.runtime/run-*/report/
+          include-hidden-files: true
           retention-days: 14
 
       - name: Upload test results on failure
@@ -84,7 +86,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: test-results/
+          path: 03-Tests/e2e/.runtime/run-*/artifacts/
+          include-hidden-files: true
           retention-days: 14
 
   build-docker:
@@ -95,6 +98,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify private environment files stay outside Docker builds
+        run: bash scripts/test-docker-context.sh
 
       - name: Build Docker image
         run: docker build -f Dockerfile -t hustle-app:${{ github.sha }} .

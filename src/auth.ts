@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, accounts, sessions, verificationTokens } from "@/lib/db/schema/auth";
+import { ensureDefaultWorkspaceForUser } from "@/lib/db/provision-user-workspace";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -44,6 +45,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user.emailVerified) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
+
+        // Repair migrated orphan accounts only after identity verification.
+        // Existing billing state and original trial deadlines are preserved.
+        ensureDefaultWorkspaceForUser(user.id);
 
         return {
           id: user.id,

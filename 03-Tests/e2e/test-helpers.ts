@@ -1,7 +1,7 @@
 /**
  * E2E Test Helpers
  *
- * Robust utilities for Playwright tests with Firebase/React apps.
+ * Robust utilities for Playwright tests with Auth.js/React apps.
  */
 
 import { Page, expect, Locator } from '@playwright/test';
@@ -74,7 +74,7 @@ export async function waitForPageReady(page: Page): Promise<void> {
   for (const selector of loadingIndicators) {
     const element = page.locator(selector).first();
     if (await element.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await element.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+      await expect(element).toBeHidden({ timeout: 30000 });
     }
   }
 }
@@ -135,7 +135,7 @@ export async function getAuthState(page: Page): Promise<{
   bodyText: string;
 }> {
   const cookies = await page.context().cookies();
-  const sessionCookie = cookies.find(c => c.name === '__session');
+  const sessionCookie = cookies.find(c => /^(?:__Secure-)?authjs\.session-token(?:\.\d+)?$/.test(c.name));
 
   return {
     url: page.url(),
@@ -154,10 +154,7 @@ export async function navigateToDreamGym(page: Page): Promise<string | null> {
   // Find first athlete
   const athleteLink = page.locator('a[href*="/athletes/"]').first();
 
-  if (!await athleteLink.isVisible({ timeout: 10000 }).catch(() => false)) {
-    console.log('No athletes found');
-    return null;
-  }
+  await expect(athleteLink, 'global setup must supply a persisted athlete').toBeVisible();
 
   // Get athlete ID from href
   const href = await athleteLink.getAttribute('href');

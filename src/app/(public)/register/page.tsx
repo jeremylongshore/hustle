@@ -85,11 +85,12 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+                <label htmlFor="firstName" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                   First Name
                 </label>
                 <input
-                  name="firstName"
+                  id="firstName"
+                name="firstName"
                   type="text"
                   value={form.firstName}
                   onChange={handleChange}
@@ -100,11 +101,12 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+                <label htmlFor="lastName" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                   Last Name
                 </label>
                 <input
-                  name="lastName"
+                  id="lastName"
+                name="lastName"
                   type="text"
                   value={form.lastName}
                   onChange={handleChange}
@@ -116,10 +118,11 @@ export default function RegisterPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                 Email
               </label>
               <input
+                id="email"
                 name="email"
                 type="email"
                 value={form.email}
@@ -131,10 +134,11 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                 Password
               </label>
               <input
+                id="password"
                 name="password"
                 type="password"
                 value={form.password}
@@ -146,10 +150,11 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-body font-medium text-zinc-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-body font-medium text-zinc-700 mb-1">
                 Confirm Password
               </label>
               <input
+                id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 value={form.confirmPassword}

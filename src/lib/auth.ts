@@ -25,6 +25,7 @@
  */
 import { auth as nextAuth } from "@/auth";
 import { eq } from "drizzle-orm";
+import { unstable_rethrow } from "next/navigation";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema/auth";
 import { isE2ETestMode } from "@/lib/e2e";
@@ -70,6 +71,7 @@ export async function auth(_request?: unknown): Promise<Session | null> {
       },
     };
   } catch (error) {
+    unstable_rethrow(error);
     console.error("[auth] session check error:", error);
     return null;
   }
@@ -105,6 +107,7 @@ export async function authWithProfile(_request?: unknown): Promise<DashboardUser
       emailVerified,
     };
   } catch (error) {
+    unstable_rethrow(error);
     console.error("[authWithProfile] error:", error);
     return null;
   }

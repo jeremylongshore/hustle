@@ -99,7 +99,7 @@
 
 1. **Found Resend API Key** in intent-solutions project
 2. **Configured Cloud Run** with:
-   - `RESEND_API_KEY="re_6LmLHJ4p_JKmSyMwp1ScWLddn7WcZQskp"`
+   - `RESEND_API_KEY="REDACTED_RESEND_KEY"`
    - `EMAIL_FROM="HUSTLE <HUSTLE@intentsolutions.io>"`
 
 3. **Created Admin Endpoint** to manually verify users
@@ -227,7 +227,7 @@ NODE_ENV=production
 NEXTAUTH_URL=https://hustlestats.io
 NEXTAUTH_SECRET=<from Secret Manager>
 DATABASE_URL=<from Secret Manager>
-RESEND_API_KEY=re_6LmLHJ4p_JKmSyMwp1ScWLddn7WcZQskp ✅ NEW
+RESEND_API_KEY=REDACTED_RESEND_KEY ✅ NEW
 EMAIL_FROM=HUSTLE <HUSTLE@intentsolutions.io> ✅ NEW
 ```
 

@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -12,9 +11,9 @@ const nextConfig: NextConfig = {
   // crash the file tracer. mobile/ is excluded for the same reason
   // (Expo/RN sub-project with its own tsconfig).
   outputFileTracingExcludes: {
-    "*": [
-      path.join(__dirname, "nwsl/**"),
-      path.join(__dirname, "mobile/**"),
+    "/*": [
+      "./nwsl/**/*",
+      "./mobile/**/*",
     ],
   },
 };

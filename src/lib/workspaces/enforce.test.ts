@@ -5,7 +5,7 @@
  * for each disabled status. No DB needed — this is pure logic.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   assertWorkspaceActive,
   getNextStep,
@@ -41,6 +41,29 @@ function createTestWorkspace(status: WorkspaceStatus): Workspace {
 }
 
 describe("assertWorkspaceActive", () => {
+  it("rejects expired, exact-deadline and invalid trial dates", () => {
+    const now = new Date("2026-09-13T20:00:00Z");
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    try {
+      for (const date of [new Date(now.getTime() - 1), now, new Date("invalid")]) {
+        expect(() => assertWorkspaceActive({ ...createTestWorkspace("trial"), trialEndsAt: date }))
+          .toThrow(expect.objectContaining({ code: "TRIAL_EXPIRED", httpStatus: 403 }));
+      }
+      expect(() => assertWorkspaceActive({ ...createTestWorkspace("trial"),
+        trialEndsAt: new Date(now.getTime() + 1) })).not.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("preserves legacy null trial deadlines and ignores trial dates for paid active workspaces", () => {
+    expect(() => assertWorkspaceActive({ ...createTestWorkspace("trial"), trialEndsAt: null }))
+      .not.toThrow();
+    expect(() => assertWorkspaceActive({ ...createTestWorkspace("active"),
+      trialEndsAt: new Date("2000-01-01T00:00:00Z") })).not.toThrow();
+  });
+
   it.each(["active", "trial"] as WorkspaceStatus[])(
     "allows %s",
     (status) => {

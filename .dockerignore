@@ -8,7 +8,22 @@ README.md
 .gitignore
 claudes-docs
 
+# Runtime credentials belong outside build layers, including archived subprojects.
+**/.env
+**/.env.*
+!**/.env.example
+
 # Phase 4.5g: vendored sub-projects at repo root with broken symlinks /
 # their own toolchains — exclude from the Next.js build context.
 nwsl
 mobile
+
+# Local browser databases, session cookies and traces never enter images.
+03-Tests/e2e/.runtime
+03-Tests/e2e/.auth
+03-Tests/playwright-report
+03-Tests/test-results.json
+test-results
+
+# The default local SQLite directory is runtime state, never a build input.
+/data

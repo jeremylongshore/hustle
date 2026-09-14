@@ -23,6 +23,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Reject tracked Resend credentials
+        run: |
+          python3 -m unittest discover -s scripts -p test_check_resend_secrets.py -v
+          python3 scripts/check-resend-secrets.py
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

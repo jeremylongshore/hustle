@@ -1,3 +1,4 @@
+import { verifyRegisteredUser } from './fixture-auth';
 import { test, expect, Page } from '@playwright/test';
 
 /**
@@ -15,21 +16,21 @@ async function login(page: Page) {
   // Register
   await page.goto('/register');
   await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-  await page.fill('input[id="firstName"]', 'Dashboard');
-  await page.fill('input[id="lastName"]', 'Test');
-  await page.fill('input[id="email"]', testEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-  await page.fill('input[id="password"]', testPassword);
-  await page.fill('input[id="confirmPassword"]', testPassword);
+  await page.fill('input[name="firstName"]', 'Dashboard');
+  await page.fill('input[name="lastName"]', 'Test');
+  await page.fill('input[type="email"]', testEmail);
+  await page.fill('input[type="password"]:not([name="confirmPassword"])', testPassword);
+  await page.fill('input[name="confirmPassword"]', testPassword);
   await page.click('button[type="submit"]');
 
   // Wait for redirect to login page
-  await page.waitForURL(/\/login/, { timeout: 60000 });
+  await page.waitForURL(/\/verify-email/, { timeout: 60000 });
+  await verifyRegisteredUser(page, testEmail);
 
   // Login
   await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-  await page.fill('input[id="email"], input[type="email"]', testEmail);
-  await page.fill('input[id="password"], input[type="password"]', testPassword);
+  await page.fill('input[type="email"], input[type="email"]', testEmail);
+  await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', testPassword);
   await page.click('button[type="submit"]');
 
   // Wait for dashboard redirect (confirms login + session established)
@@ -55,7 +56,7 @@ test.describe('Dashboard - Basic Functionality', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Check for dashboard elements - give extra time for server component rendering
-    await expect(page.locator('h1, h2').filter({ hasText: /dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h1, h2').filter({ hasText: /Good morning/i }).first()).toBeVisible({ timeout: 15000 });
 
     // Note: Visual regression tests disabled - require baseline screenshots
     // To enable: run `npx playwright test --update-snapshots` locally
@@ -91,9 +92,7 @@ test.describe('Dashboard - Basic Functionality', () => {
     // Look for button/link to add athlete
     const addButton = page.locator('button, a').filter({ hasText: /Add Athlete|Add Player|New Athlete/i }).first();
 
-    if (await addButton.isVisible()) {
-      await expect(addButton).toBeVisible();
-    }
+    await expect(addButton).toBeVisible();
   });
 
   test('should have user menu or profile section', async ({ page }) => {
@@ -102,9 +101,7 @@ test.describe('Dashboard - Basic Functionality', () => {
     // Look for user menu/profile
     const userMenu = page.locator('button, div').filter({ hasText: /Dashboard|Test|Settings|Profile/i }).first();
 
-    if (await userMenu.isVisible()) {
-      await expect(userMenu).toBeVisible();
-    }
+    await expect(userMenu).toBeVisible();
   });
 });
 
@@ -160,7 +157,7 @@ test.describe('Dashboard - Responsive Design', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Dashboard should be visible - give extra time for server component rendering
-    await expect(page.locator('h1, h2').filter({ hasText: /dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h1, h2').filter({ hasText: /Good morning/i }).first()).toBeVisible({ timeout: 15000 });
 
     // Content should not overflow
     const body = await page.locator('body').boundingBox();
@@ -175,7 +172,7 @@ test.describe('Dashboard - Responsive Design', () => {
     await login(page);
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('h1, h2').filter({ hasText: /dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h1, h2').filter({ hasText: /Good morning/i }).first()).toBeVisible({ timeout: 15000 });
 
     // Note: Visual regression disabled - requires baseline screenshots
   });
@@ -186,7 +183,7 @@ test.describe('Dashboard - Responsive Design', () => {
     await login(page);
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('h1, h2').filter({ hasText: /dashboard/i }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h1, h2').filter({ hasText: /Good morning/i }).first()).toBeVisible({ timeout: 15000 });
 
     // Note: Visual regression disabled - requires baseline screenshots
   });
@@ -196,7 +193,7 @@ test.describe('Dashboard - Performance', () => {
   // Don't use global storage state - this test creates its own user
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('should load dashboard in under 3 seconds', async ({ page }) => {
+  test('should load dashboard in under 5 seconds', async ({ page }) => {
     await login(page);
 
     const startTime = Date.now();

@@ -1,3 +1,4 @@
+import { verifyRegisteredUser } from './fixture-auth';
 import { test, expect } from '@playwright/test';
 
 /**
@@ -7,6 +8,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Authentication Flow', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should load landing page successfully', async ({ page }) => {
     await page.goto('/');
@@ -15,15 +17,17 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveTitle(/Hustle/i);
 
     // Check landing page has main heading
-    await expect(page.locator('h1')).toBeVisible();
+    for (const title of ['Track.', 'Train.', 'Dominate.']) {
+      await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    }
   });
 
   test('should show login page', async ({ page }) => {
     await page.goto('/login');
 
     // Check for email and password fields
-    await expect(page.locator('input[id="email"], input[type="email"]')).toBeVisible();
-    await expect(page.locator('input[id="password"], input[type="password"]')).toBeVisible();
+    await expect(page.locator('input[type="email"], input[type="email"]')).toBeVisible();
+    await expect(page.locator('input[type="password"]:not([name="confirmPassword"]), input[type="password"]')).toBeVisible();
 
     // Check for submit button
     await expect(page.locator('button[type="submit"]')).toBeVisible();
@@ -45,8 +49,8 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
 
     // Fill with invalid credentials
-    await page.fill('input[id="email"], input[type="email"]', 'invalid@example.com');
-    await page.fill('input[id="password"], input[type="password"]', 'wrongpassword');
+    await page.fill('input[type="email"], input[type="email"]', 'invalid@example.com');
+    await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', 'wrongpassword');
 
     // Submit
     await page.click('button[type="submit"]');
@@ -67,12 +71,11 @@ test.describe('Authentication Flow', () => {
     const testEmail = `test${timestamp}@example.com`;
 
     // Fill registration form
-    await page.fill('input[id="firstName"]', 'Test');
-    await page.fill('input[id="lastName"]', 'User');
-    await page.fill('input[id="email"]', testEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', 'TestPassword123!');
-    await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+    await page.fill('input[name="firstName"]', 'Test');
+    await page.fill('input[name="lastName"]', 'User');
+    await page.fill('input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
 
     // Submit registration
     await page.click('button[type="submit"]');
@@ -82,7 +85,7 @@ test.describe('Authentication Flow', () => {
 
     // Should redirect to login or dashboard
     const url = page.url();
-    expect(url).toMatch(/\/(login|dashboard)/);
+    expect(url).toMatch(/\/verify-email/);
   });
 
   test('should login with valid credentials and redirect to dashboard', async ({ page }) => {
@@ -93,22 +96,21 @@ test.describe('Authentication Flow', () => {
     const testEmail = `testuser${timestamp}@example.com`;
     const testPassword = 'TestPassword123!';
 
-    await page.fill('input[id="firstName"]', 'Test');
-    await page.fill('input[id="lastName"]', 'User');
-    await page.fill('input[id="email"]', testEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', testPassword);
-    await page.fill('input[id="confirmPassword"]', testPassword);
+    await page.fill('input[name="firstName"]', 'Test');
+    await page.fill('input[name="lastName"]', 'User');
+    await page.fill('input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', testPassword);
+    await page.fill('input[name="confirmPassword"]', testPassword);
     await page.click('button[type="submit"]');
 
     // Wait for registration to complete
     await page.waitForTimeout(2000);
 
-    // Now test login
-    await page.goto('/login');
+    await page.waitForURL(/\/verify-email/);
+    await verifyRegisteredUser(page, testEmail);
 
-    await page.fill('input[id="email"], input[type="email"]', testEmail);
-    await page.fill('input[id="password"], input[type="password"]', testPassword);
+    await page.fill('input[type="email"], input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', testPassword);
 
     await page.click('button[type="submit"]');
 
@@ -146,21 +148,20 @@ test.describe('Authentication Flow', () => {
     const timestamp = Date.now();
     const testEmail = `logouttest${timestamp}@example.com`;
 
-    await page.fill('input[id="firstName"]', 'Logout');
-    await page.fill('input[id="lastName"]', 'Test');
-    await page.fill('input[id="email"]', testEmail);
-    await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', 'TestPassword123!');
-    await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+    await page.fill('input[name="firstName"]', 'Logout');
+    await page.fill('input[name="lastName"]', 'Test');
+    await page.fill('input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
 
-    // In E2E mode, may go directly to dashboard due to auto-verify
-    await page.waitForURL(/\/(login|dashboard)/, { timeout: 10000 });
+    await page.waitForURL(/\/verify-email/, { timeout: 10000 });
+    await verifyRegisteredUser(page, testEmail);
 
     // If on login page, login again
     if (page.url().includes('/login')) {
-      await page.fill('input[id="email"], input[type="email"]', testEmail);
-      await page.fill('input[id="password"], input[type="password"]', 'TestPassword123!');
+      await page.fill('input[type="email"], input[type="email"]', testEmail);
+      await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', 'TestPassword123!');
       await page.click('button[type="submit"]');
       await page.waitForURL(/\/dashboard/, { timeout: 10000 });
     }
@@ -168,30 +169,10 @@ test.describe('Authentication Flow', () => {
     // Should be logged in
     expect(page.url()).toContain('/dashboard');
 
-    // Find logout button - may need to scroll into view in sidebar
-    const logoutButton = page.locator('button:has-text("Logout"), button:has-text("Sign Out"), [data-testid="logout-button"]').first();
-
-    // Check visibility with shorter timeout
-    const isVisible = await logoutButton.isVisible({ timeout: 5000 }).catch(() => false);
-
-    if (isVisible) {
-      // Use JavaScript click to bypass Playwright's viewport checks entirely
-      // This is necessary for sidebar elements in headless mode
-      await logoutButton.evaluate(el => (el as HTMLElement).click());
-
-      // Wait for redirect to login or home
-      await page.waitForURL(/\/(login)?$/, { timeout: 10000 });
-
-      // Should redirect to home or login
-      const url = page.url();
-      expect(url).toMatch(/\/(login)?$/);
-    } else {
-      // Use API logout if button not accessible (mobile viewport, collapsed sidebar, etc.)
-      console.log('Logout button not visible - using API logout');
-      await page.request.post('/api/auth/logout');
-      await page.goto('/login');
-      expect(page.url()).toContain('/login');
-    }
+    await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
+    await expect(page).toHaveURL(/\/login/);
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('should maintain session after page refresh', async ({ page }) => {
@@ -201,19 +182,17 @@ test.describe('Authentication Flow', () => {
     const timestamp = Date.now();
     const testEmail = `sessiontest${timestamp}@example.com`;
 
-    await page.fill('input[id="firstName"]', 'Session');
-    await page.fill('input[id="lastName"]', 'Test');
-    await page.fill('input[id="email"]', testEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', 'TestPassword123!');
-    await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+    await page.fill('input[name="firstName"]', 'Session');
+    await page.fill('input[name="lastName"]', 'Test');
+    await page.fill('input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
 
-    await page.waitForTimeout(2000);
-
-    await page.goto('/login');
-    await page.fill('input[id="email"], input[type="email"]', testEmail);
-    await page.fill('input[id="password"], input[type="password"]', 'TestPassword123!');
+    await page.waitForURL(/\/verify-email/);
+    await verifyRegisteredUser(page, testEmail);
+    await page.fill('input[type="email"], input[type="email"]', testEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
 
     await page.waitForTimeout(2000);
@@ -231,19 +210,18 @@ test.describe('Authentication Flow', () => {
 
 test.describe('Registration Validation', () => {
 
-  test('should reject weak passwords', async ({ page }) => {
+  test('should reject passwords below the documented eight-character minimum', async ({ page }) => {
     await page.goto('/register');
 
-    await page.fill('input[id="firstName"]', 'Test');
-    await page.fill('input[id="lastName"]', 'User');
-    await page.fill('input[id="email"]', 'test@example.com');
-  await page.fill('input[id="phone"]', '1234567890');
+    await page.fill('input[name="firstName"]', 'Test');
+    await page.fill('input[name="lastName"]', 'User');
+    await page.fill('input[type="email"]', 'test@example.com');
 
-    const weakPasswords = ['123', 'password', 'abc', '12345678'];
+    const weakPasswords = ['123', 'abc', '1234567'];
 
     for (const weakPassword of weakPasswords) {
-      await page.fill('input[id="password"]', weakPassword);
-      await page.fill('input[id="confirmPassword"]', weakPassword);
+      await page.fill('input[type="password"]:not([name="confirmPassword"])', weakPassword);
+      await page.fill('input[name="confirmPassword"]', weakPassword);
       await page.click('button[type="submit"]');
 
       await page.waitForTimeout(1000);
@@ -261,16 +239,15 @@ test.describe('Registration Validation', () => {
       'notanemail',
       '@example.com',
       'test@',
-      'test..test@example.com'
+      'test@example..com'
     ];
 
     for (const invalidEmail of invalidEmails) {
-      await page.fill('input[id="firstName"]', 'Test');
-      await page.fill('input[id="lastName"]', 'User');
-      await page.fill('input[id="email"]', invalidEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-      await page.fill('input[id="password"]', 'TestPassword123!');
-      await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+      await page.fill('input[name="firstName"]', 'Test');
+      await page.fill('input[name="lastName"]', 'User');
+      await page.fill('input[type="email"]', invalidEmail);
+      await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+      await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
 
       await page.click('button[type="submit"]');
 
@@ -288,24 +265,22 @@ test.describe('Registration Validation', () => {
 
     // Register first time
     await page.goto('/register');
-    await page.fill('input[id="firstName"]', 'First');
-    await page.fill('input[id="lastName"]', 'User');
-    await page.fill('input[id="email"]', duplicateEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', 'TestPassword123!');
-    await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+    await page.fill('input[name="firstName"]', 'First');
+    await page.fill('input[name="lastName"]', 'User');
+    await page.fill('input[type="email"]', duplicateEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
 
     await page.waitForTimeout(2000);
 
     // Try to register again with same email
     await page.goto('/register');
-    await page.fill('input[id="firstName"]', 'Second');
-    await page.fill('input[id="lastName"]', 'User');
-    await page.fill('input[id="email"]', duplicateEmail);
-  await page.fill('input[id="phone"]', '1234567890');
-    await page.fill('input[id="password"]', 'TestPassword123!');
-    await page.fill('input[id="confirmPassword"]', 'TestPassword123!');
+    await page.fill('input[name="firstName"]', 'Second');
+    await page.fill('input[name="lastName"]', 'User');
+    await page.fill('input[type="email"]', duplicateEmail);
+    await page.fill('input[type="password"]:not([name="confirmPassword"])', 'TestPassword123!');
+    await page.fill('input[name="confirmPassword"]', 'TestPassword123!');
     await page.click('button[type="submit"]');
 
     await page.waitForTimeout(2000);

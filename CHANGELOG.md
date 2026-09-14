@@ -9,6 +9,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Reliability — 2026-09-13
+
+- Complete the Auth.js request-guard migration, accepting verified encrypted
+  sessions and rejecting forged/expired cookies. Preserve in-app return paths.
+- Recover the login form after a 15-second deadline or network error; the old
+  fake-clock test fails and the repaired behavior passes. Remove the redundant
+  post-login refresh that could later remount a dashboard form and discard input.
+- Restore transactional account/workspace provisioning and preserve original
+  trial and billing state when reconciling migrated orphan accounts.
+- Restore the declared Playwright dependency and real local Auth.js/SQLite
+  browser fixtures, with token verification, isolated state, fail-closed builds
+  and private artifacts excluded from container images. Retain existing user
+  journey assertions while correcting obsolete form selectors.
+- Keep E2E SQLite writes outside the watched Next.js source tree, wait for client
+  route transitions before entering game data, and remove guarded temp databases
+  during global teardown. The final production-built Chromium replay passes all
+  87 scenarios sequentially with retries disabled.
+- Restore the previously empty integration lane with 16 transactional SQLite
+  provisioning cases and make it blocking in CI. Type checking, unit tests and
+  Chromium E2E are blocking again; the separately classified unit lane passes
+  858 tests.
+- Scope Tailwind v4 source discovery to `src/`, exclude runtime upload paths from
+  Turbopack file tracing, and preserve Next's framework-controlled dynamic-render
+  exceptions through application authentication catches.
+- Record demonstrated migration failures, regression evidence and verification
+  boundaries in [the browser incident report](000-docs/6785-AA-INC-auth-migration-browser-regressions.md).
+
+### Security — 2026-09-13
+
+- Complete the September 7 credential-scrub repair from PR #49: remove the
+  remaining Resend literals from three historical documents, preserving the
+  prior repair's adjacent NextAuth and archived Groq redactions.
+- Add a blocking, secret-safe Resend scan to CI, pre-merge validation and the
+  deployment build gate. The scan includes tracked documentation and archives;
+  13 hermetic regressions cover detection, staged-content integrity and errors.
+- Exclude private dotenv files from Docker build contexts, including nested
+  archives; preserve public `.env.example` templates. A real scratch-image
+  regression proves the old context included private files and the repair excludes them.
+- Isolate game-query unit tests from the CI job-wide E2E flag and explicitly
+  cover enabled-mode verification. The old two failures reproduce; all 822
+  application unit tests pass after the correction.
+- Record why the earlier repair did not reach main, independently verified
+  rejection of both reported keys, and the separate empty production email
+  configuration in [the incident report](000-docs/6783-AA-INC-resend-secret-exposure.md).
+  Historical Git objects remain; credential rejection does not prove past misuse
+  did not occur. Application email delivery is not claimed restored by this scrub.
+
+
 ### Added
 - **ADK Documentation Crawler Pipeline**: Production-grade infrastructure for crawling Google ADK docs
   - Complete Python package in `tools/adk_docs_crawler/` with 8 modules
