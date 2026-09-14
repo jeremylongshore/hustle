@@ -49,9 +49,9 @@ async function writeBuffer(
   relativePath: string,
   buffer: Buffer
 ): Promise<void> {
-  const absolute = path.join(getStorageRoot(), relativePath);
-  await fs.mkdir(path.dirname(absolute), { recursive: true });
-  await fs.writeFile(absolute, buffer, { mode: 0o600 });
+  const absolute = path.join(/*turbopackIgnore: true*/ getStorageRoot(), relativePath);
+  await fs.mkdir(/*turbopackIgnore: true*/ path.dirname(absolute), { recursive: true });
+  await fs.writeFile(/*turbopackIgnore: true*/ absolute, buffer, { mode: 0o600 });
 }
 
 export async function uploadPlayerPhotoLocal(params: {
@@ -99,10 +99,10 @@ export async function uploadUserPhotoLocal(params: {
  * If the file is already gone, returns 0 without raising.
  */
 export async function deletePhotoLocal(relativePath: string): Promise<number> {
-  const absolute = path.join(getStorageRoot(), relativePath);
+  const absolute = path.join(/*turbopackIgnore: true*/ getStorageRoot(), relativePath);
   try {
-    const stat = await fs.stat(absolute);
-    await fs.unlink(absolute);
+    const stat = await fs.stat(/*turbopackIgnore: true*/ absolute);
+    await fs.unlink(/*turbopackIgnore: true*/ absolute);
     return stat.size / (1024 * 1024);
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException)?.code;
@@ -144,12 +144,13 @@ export async function resolveServePath(relativePath: string): Promise<{
 } | null> {
   if (!relativePath || relativePath.includes("..")) return null;
   const root = getStorageRoot();
-  const absolute = path.resolve(root, relativePath);
-  if (!absolute.startsWith(path.resolve(root) + path.sep) && absolute !== path.resolve(root)) {
+  const absolute = path.resolve(/*turbopackIgnore: true*/ root, relativePath);
+  const resolvedRoot = path.resolve(/*turbopackIgnore: true*/ root);
+  if (!absolute.startsWith(resolvedRoot + path.sep) && absolute !== resolvedRoot) {
     return null;
   }
   try {
-    const stat = await fs.stat(absolute);
+    const stat = await fs.stat(/*turbopackIgnore: true*/ absolute);
     if (!stat.isFile()) return null;
     return { absolute, size: stat.size };
   } catch {

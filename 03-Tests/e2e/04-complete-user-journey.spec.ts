@@ -1,41 +1,7 @@
-import { test, expect, Page } from '@playwright/test';
-
-/**
- * Complete User Journey E2E Test
- *
- * Tests the full MVP user flow from registration through game logging:
- * 1. Register new parent account
- * 2. Verify email (simulated)
- * 3. Login
- * 4. Add athlete profile
- * 5. View athletes list
- * 6. Click athlete to see detail page
- * 7. Log a game with stats
- * 8. Verify game appears in athlete history
- * 9. Verify dashboard stats update
- */
-
-// Helper function to navigate with retry
-async function safeGoto(page: Page, url: string, options: { timeout?: number; retries?: number } = {}) {
-  const { timeout = 30000, retries = 2 } = options;
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      await page.goto(url, { timeout, waitUntil: 'domcontentloaded' });
-      // Wait for page to stabilize
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      return;
-    } catch (error: any) {
-      lastError = error;
-      console.log(`Navigation attempt ${attempt + 1} failed: ${error.message}`);
-      if (attempt < retries) {
-        await page.waitForTimeout(1000);
-      }
-    }
-  }
-  throw lastError;
-}
+import { verifyRegisteredUser } from './fixture-auth';
+import { fillAthleteForm, submitAthleteForm } from './fixture-athlete';
+import { fillGameForm, submitGameForm } from './fixture-game';
+import { test, expect, type Page } from '@playwright/test';
 
 // Helper function to register and login
 async function registerAndLogin(page: Page) {
@@ -48,676 +14,133 @@ async function registerAndLogin(page: Page) {
   await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
 
   // Fill registration form
-  await page.fill('input[id="firstName"]', 'Journey');
-  await page.fill('input[id="lastName"]', 'Test');
-  await page.fill('input[id="email"]', testEmail);
-  await page.fill('input[id="phone"]', '5551234567');
-  await page.fill('input[id="password"]', testPassword);
-  await page.fill('input[id="confirmPassword"]', testPassword);
+  await page.fill('input[name="firstName"]', 'Journey');
+  await page.fill('input[name="lastName"]', 'Test');
+  await page.fill('input[type="email"]', testEmail);
+  await page.fill('input[type="password"]:not([name="confirmPassword"])', testPassword);
+  await page.fill('input[name="confirmPassword"]', testPassword);
 
   // Submit registration and wait for redirect to login
   await page.click('button[type="submit"]');
-  await page.waitForURL(/\/login/, { timeout: 60000 });
+  await page.waitForURL(/\/verify-email/, { timeout: 60000 });
+  await verifyRegisteredUser(page, testEmail);
 
   // Login (in real app would need email verification)
   await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-  await page.fill('input[id="email"], input[type="email"]', testEmail);
-  await page.fill('input[id="password"], input[type="password"]', testPassword);
+  await page.fill('input[type="email"], input[type="email"]', testEmail);
+  await page.fill('input[type="password"]:not([name="confirmPassword"]), input[type="password"]', testPassword);
   await page.click('button[type="submit"]');
 
   // Wait for dashboard redirect (confirms login + provisioning completed)
   await page.waitForURL(/\/dashboard/, { timeout: 90000 });
 
   // Wait for session to be fully established (session cookie creation is async)
-  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('button', { name: 'Sign Out', exact: true })).toBeVisible();
 
   return { email: testEmail, password: testPassword };
 }
 
-test.describe('Complete User Journey - Happy Path', () => {
-  // Don't use global storage state - this test creates its own user
+
+async function prepareAthlete(page: Page, position = 'CB') {
+  await registerAndLogin(page);
+  await page.goto('/dashboard/add-athlete');
+  const name = `Journey Athlete ${Date.now()}`;
+  await fillAthleteForm(page, name, { position });
+  const player = await submitAthleteForm(page);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await page.locator(`a[href="/dashboard/athletes/${player.id}"]`).click();
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await page.locator('a[href="/dashboard/log-game"]').first().click();
+  await expect(page).toHaveURL(/log-game$/);
+  return player;
+}
+
+function gamePayload(playerId: string, index = 1) {
+  return { playerId, date: new Date().toISOString().slice(0, 10), opponent: `Fixture Opponent ${index}`,
+    result: 'Win', yourScore: 1, opponentScore: 0, minutesPlayed: 90, goals: 0, assists: 0 };
+}
+
+test.describe('Complete User Journey', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should complete full MVP journey: Register → Add Athlete → Log Game → View Stats', async ({ page }) => {
-    // Handle any unexpected dialogs (alerts) by accepting them and logging the message
-    page.on('dialog', async (dialog) => {
-      console.log(`[Dialog] ${dialog.type()}: ${dialog.message()}`);
-      await dialog.accept();
-    });
-
-    // STEP 1: Register and Login
-    const user = await registerAndLogin(page);
-    console.log(`✓ User registered and logged in: ${user.email}`);
-
-    // Verify we're on dashboard
-    await expect(page).toHaveURL(/\/dashboard/);
-    console.log('✓ Redirected to dashboard');
-
-    // STEP 2: Add Athlete
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-
-    const athleteName = `Test Athlete ${Date.now()}`;
-
-    // Fill name (using id selector - matches the form)
-    await page.fill('input[id="name"]', athleteName);
-
-    // Fill birthday
-    await page.fill('input[id="birthday"]', '2010-06-15');
-
-    // Select gender (required field)
-    await page.click('input[name="gender"][value="male"]');
-
-    // Select primary position (CB = Center Back, a defender)
-    await page.selectOption('select[id="primaryPosition"]', 'CB');
-
-    // Select league (required field)
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-
-    // Fill team/club
-    await page.fill('input[id="teamClub"]', 'Elite FC');
-
-    // Submit athlete form and capture API response for debugging
-    console.log('Submitting athlete form...');
-
-    // Capture API response for better error debugging
-    const [response] = await Promise.all([
-      page.waitForResponse(
-        r => r.url().includes('/api/players/create') && r.request().method() === 'POST',
-        { timeout: 30000 }
-      ).catch(() => null),
-      page.click('button[type="submit"]'),
-    ]);
-
-    // Log API response for debugging
-    if (response) {
-      const status = response.status();
-      const body = await response.json().catch(() => ({}));
-      console.log(`API Response: ${status}`, JSON.stringify(body, null, 2));
-
-      if (status >= 400) {
-        const errorMsg = body.message || body.error || 'Unknown error';
-        throw new Error(`Athlete creation API failed (${status}): ${errorMsg}`);
-      }
-    }
-
-    // Wait for redirect to dashboard root (the form does window.location.href = '/dashboard')
-    // Must use /\/dashboard\/?$/ to avoid matching /dashboard/add-athlete
-    await page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }).catch(async () => {
-      // Check for visible error banner with actual text content
-      const errorBanner = page.locator('.bg-red-50[role="alert"]');
-      if (await errorBanner.isVisible({ timeout: 2000 }).catch(() => false)) {
-        const errorText = await errorBanner.textContent();
-        if (errorText?.trim()) {
-          throw new Error(`Athlete creation failed: ${errorText}`);
-        }
-      }
-      // Take screenshot for debugging
-      console.log('Timeout waiting for dashboard redirect, taking screenshot...');
-      await page.screenshot({ path: 'test-results/athlete-form-timeout.png' });
-      throw new Error('Athlete form submission timed out - no redirect');
-    });
-
-    console.log(`✓ Athlete added: ${athleteName}`);
-
-    // STEP 3: View Athletes List
-    // Brief wait to ensure Firestore write is fully committed before SSR read
-    await page.waitForTimeout(1000);
-
-    await safeGoto(page, '/dashboard/athletes');
-
-    // Wait for the page to load and show athletes grid (not empty state)
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // If we see "No athletes yet", refresh the page once (Firestore eventual consistency)
-    const emptyState = page.locator('text="No athletes yet"');
-    if (await emptyState.isVisible({ timeout: 2000 }).catch(() => false)) {
-      console.log('   Empty state detected, refreshing page...');
-      await page.reload();
-      await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-    }
-
-    // Find the athlete link by looking for anchor tags with athlete URLs containing the name
-    // The athletes page renders: <Link href="/dashboard/athletes/{id}"><Card>...<h3>{name}</h3>...</Card></Link>
-    const athleteLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: new RegExp(athleteName, 'i') })
-    }).first();
-
-    // Wait for athlete to appear (may need time for SSR/Firestore consistency)
-    await expect(athleteLink).toBeVisible({ timeout: 15000 });
-    console.log('✓ Athlete visible in athletes list');
-
-    // STEP 4: Click athlete to view detail page
-    await athleteLink.click();
-
-    // Wait for navigation to athlete detail page
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-    console.log('✓ Navigated to athlete detail page');
-
-    // Wait for detail page to load by checking for athlete name in header
-    await page.waitForSelector('h1, h2', { timeout: 10000 });
-    console.log('✓ Athlete detail page loaded');
-
-    // STEP 5: Log a Game
-    // Click "Log a Game" button on the detail page
-    const logGameButton = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logGameButton).toBeVisible({ timeout: 10000 });
-    await logGameButton.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for player dropdown to be populated (form fetches players first)
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-
-    // Fill game details - form uses id attributes, not name
-    const today = new Date().toISOString().split('T')[0];
-    await page.fill('input#date', today);
-
-    await page.fill('input#opponent', 'Rival United');
-
-    // Select result (dropdown, not radio buttons)
-    await page.selectOption('select#result', 'Win');
-
-    // Fill final score (single field like "3-1", not separate inputs)
-    await page.fill('input#finalScore', '3-1');
-
-    // Fill minutes played
-    await page.fill('input#minutesPlayed', '90');
-
-    // Fill goals scored
-    await page.fill('input#goals', '1');
-
-    // Fill assists (always visible on this form)
-    await page.fill('input#assists', '1');
-
-    // Defensive stats only show for Defender position (CB), check if visible
-    const tacklesInput = page.locator('input#tackles');
-    if (await tacklesInput.isVisible({ timeout: 1000 })) {
-      await tacklesInput.fill('8');
-      console.log('✓ Defensive stats fields visible');
-
-      const interceptionsInput = page.locator('input#interceptions');
-      if (await interceptionsInput.isVisible({ timeout: 500 })) {
-        await interceptionsInput.fill('4');
-      }
-
-      const clearancesInput = page.locator('input#clearances');
-      if (await clearancesInput.isVisible({ timeout: 500 })) {
-        await clearancesInput.fill('12');
-      }
-    }
-
-    // Submit game
-    const submitButton = page.locator('button[type="submit"]').filter({ hasText: /Save|Submit|Log/i });
-    await submitButton.click();
-
-    // Wait for redirect back to athlete detail page
-    await page.waitForURL(/athletes\//, { timeout: 30000 });
-
-    console.log('✓ Game logged successfully');
-
-    // STEP 6: Verify game appears in athlete history
-    // Should redirect to athlete detail page or games list
-    const url = page.url();
-    expect(url).toMatch(/dashboard|athletes|games/i);
-
-    // Look for game in history
-    const gameRow = page.locator('tr, div, li').filter({ hasText: /Rival United/i });
-    await expect(gameRow.first()).toBeVisible({ timeout: 5000 });
-    console.log('✓ Game visible in athlete history');
-
-    // Verify game details show
-    const bodyText = await page.textContent('body');
-    expect(bodyText).toContain('Rival United');
-    expect(bodyText).toMatch(/3-1|3\s*-\s*1/); // Final score
-    console.log('✓ Game details correct');
-
-    // STEP 7: Verify dashboard stats update
+    const player = await prepareAthlete(page);
+    await fillGameForm(page, { athleteId: player.id, opponent: 'Rival United', goals: 1, assists: 1 });
+    await page.getByLabel('Tackles', { exact: true }).fill('8');
+    await page.getByLabel('Interceptions', { exact: true }).fill('4');
+    await page.getByLabel('Clearances', { exact: true }).fill('12');
+    const result = await submitGameForm(page);
+    expect(result.game).toMatchObject({ goals: 1, assists: 1, tackles: 8, interceptions: 4, clearances: 12, finalScore: '3-1' });
+    await expect(page.getByText('vs Rival United', { exact: true }).filter({ visible: true }).first()).toBeVisible();
+    await page.goto(`/dashboard/athletes/${player.id}`);
+    await expect(page.getByText('vs Rival United', { exact: true })).toBeVisible();
+    await expect(page.getByText('3–1', { exact: true })).toBeVisible();
     await page.goto('/dashboard');
-    await page.waitForTimeout(1000);
-
-    // Dashboard should now show 1 verified game instead of 0
-    // The dashboard uses "Verified Games" as the card title
-    const statsCard = page.locator('div, card').filter({ hasText: /Verified Games|Games/i });
-    const statsText = await statsCard.first().textContent();
-
-    // Check for "1" in stats - dashboard shows "1 verified game" when there's 1 game
-    expect(statsText).toMatch(/1\s+verified\s+game|1\s+game/i);
-    console.log('✓ Dashboard stats updated (1 verified game recorded)');
-
-    console.log('✅ COMPLETE USER JOURNEY PASSED');
+    const gamesCard = page.getByText('Games Played', { exact: true }).locator('../..');
+    await expect(gamesCard.locator('p').filter({ hasText: /^1$/ })).toBeVisible();
+    const games = await page.request.get(`/api/games?playerId=${player.id}`);
+    expect(games.ok()).toBe(true);
+    expect((await games.json()).games).toHaveLength(1);
   });
-});
-
-test.describe('Complete User Journey - Field Player vs Goalkeeper', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should show different stats fields for goalkeeper', async ({ page }) => {
-    // Register and login
-    await registerAndLogin(page);
-
-    // Add goalkeeper
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-
-    const goalkeeperName = `GK ${Date.now()}`;
-    await page.fill('input[id="name"]', goalkeeperName);
-    await page.fill('input[id="birthday"]', '2009-03-20');
-    await page.click('input[name="gender"][value="male"]');
-    await page.selectOption('select[id="primaryPosition"]', 'GK');
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-    await page.fill('input[id="teamClub"]', 'Goalkeeper FC');
-
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to dashboard root or success indicator
-    // Must use /\/dashboard\/?$/ to avoid matching /dashboard/add-athlete
-    await Promise.race([
-      page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }),
-      page.waitForSelector('[class*="text-green"]', { timeout: 30000 }),
-    ]).catch(() => {});
-
-    // Navigate to log game through athletes list (with retry for session timing)
-    await safeGoto(page, '/dashboard/athletes');
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // Find the goalkeeper athlete link
-    const gkLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: new RegExp(goalkeeperName, 'i') })
-    }).first();
-    await expect(gkLink).toBeVisible({ timeout: 15000 });
-    await gkLink.click();
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-
-    // Click Log a Game on detail page
-    const logGameBtn = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logGameBtn).toBeVisible({ timeout: 10000 });
-    await logGameBtn.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for players dropdown to load
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-
-    // Fill basic game details (form uses id attributes)
-    await page.fill('input#date', new Date().toISOString().split('T')[0]);
-    await page.fill('input#opponent', 'Striker FC');
-
-    // Goalkeeper should see DIFFERENT fields (only after selecting GK player)
-    const savesInput = page.locator('input#saves');
-    await expect(savesInput).toBeVisible();
-    await savesInput.fill('5');
-    console.log('✓ Goalkeeper sees "saves" field');
-
-    const goalsAgainstInput = page.locator('input#goalsAgainst');
-    await expect(goalsAgainstInput).toBeVisible();
-    await goalsAgainstInput.fill('0');
-
-    const cleanSheetCheckbox = page.locator('input#cleanSheet');
-    if (await cleanSheetCheckbox.isVisible({ timeout: 1000 })) {
-      await cleanSheetCheckbox.check();
-      console.log('✓ Goalkeeper can mark clean sheet');
-    }
-
-    // Goalkeeper should NOT see defensive stats (tackles, interceptions, etc.)
-    const tacklesInput = page.locator('input#tackles');
-    expect(await tacklesInput.isVisible({ timeout: 1000 })).toBeFalsy();
-    console.log('✓ Goalkeeper does NOT see defensive stats (correct)');
-
-    console.log('✅ POSITION-SPECIFIC FIELDS WORKING');
+    const player = await prepareAthlete(page, 'GK');
+    await fillGameForm(page, { athleteId: player.id, opponent: 'Striker FC', teamScore: 1, opponentScore: 0, position: 'GK' });
+    await page.getByLabel('Saves', { exact: true }).fill('5');
+    await page.getByLabel('Goals Against', { exact: true }).fill('0');
+    await page.getByLabel('Clean Sheet', { exact: true }).check();
+    await expect(page.getByLabel('Tackles', { exact: true })).toHaveCount(0);
+    const result = await submitGameForm(page);
+    expect(result.game).toMatchObject({ saves: 5, goalsAgainst: 0, cleanSheet: true, tackles: 0 });
   });
-});
-
-test.describe('Complete User Journey - Data Validation', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should enforce result-score consistency', async ({ page }) => {
-    await registerAndLogin(page);
-
-    // Add athlete
-    const validatorName = `Validator ${Date.now()}`;
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-    await page.fill('input[id="name"]', validatorName);
-    await page.fill('input[id="birthday"]', '2010-01-01');
-    await page.click('input[name="gender"][value="male"]');
-    await page.selectOption('select[id="primaryPosition"]', 'CM');
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-    await page.fill('input[id="teamClub"]', 'Validation FC');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to dashboard root or success indicator
-    await Promise.race([
-      page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }),
-      page.waitForSelector('[class*="text-green"]', { timeout: 30000 }),
-    ]).catch(() => {});
-
-    // Navigate to log game through athletes list (with retry for session timing)
-    await safeGoto(page, '/dashboard/athletes');
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // Find and click the athlete link
-    const valLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: new RegExp(validatorName, 'i') })
-    }).first();
-    await expect(valLink).toBeVisible({ timeout: 15000 });
-    await valLink.click();
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-
-    // Click Log a Game
-    const logBtn = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logBtn).toBeVisible({ timeout: 10000 });
-    await logBtn.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for players dropdown to load
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-
-    // Fill form with INCONSISTENT data (Win but losing score)
-    await page.fill('input#date', new Date().toISOString().split('T')[0]);
-    await page.fill('input#opponent', 'Validation Test');
-
-    // Select "Win" but give losing score (form uses select, not radio)
-    await page.selectOption('select#result', 'Win');
-    await page.fill('input#finalScore', '1-3'); // Losing score for a "Win"!
-    await page.fill('input#minutesPlayed', '90');
-    await page.fill('input#goals', '0');
-    await page.fill('input#assists', '0');
-
-    // Try to submit
-    await page.locator('button[type="submit"]').filter({ hasText: /Save|Submit|Log/i }).click();
-    await page.waitForTimeout(1000);
-
-    // Note: Current form may not have cross-validation. Check for error or form stay.
-    // If validation exists, error shows. If not, it submits.
-    const url = page.url();
-    const errorMessage = page.locator('text=/Result does not match|mismatch|invalid/i');
-    const hasError = await errorMessage.isVisible({ timeout: 3000 }).catch(() => false);
-
-    if (hasError) {
-      console.log('✓ Validation blocked inconsistent result-score');
-    } else {
-      // Form may not have this validation yet - test passes if form behaves consistently
-      console.log('⚠ No cross-validation (form submitted or no explicit error)');
-    }
-    console.log('✅ CROSS-VALIDATION TEST COMPLETED');
+    const player = await prepareAthlete(page, 'CM');
+    await fillGameForm(page, { athleteId: player.id, opponent: 'Validation Test', teamScore: 1, opponentScore: 3, position: 'CM' });
+    const result = await submitGameForm(page);
+    expect(result.game).toMatchObject({ result: 'Loss', finalScore: '1-3' });
+    // Direct callers also cannot override the score-derived result with an inconsistent value.
+    const invalid = await page.request.post('/api/games', { data: { ...gamePayload(player.id), result: 'Win', yourScore: 1, opponentScore: 3 } });
+    expect(invalid.status()).toBe(400);
+    expect((await invalid.json()).details.result).toEqual(expect.arrayContaining([expect.stringMatching(/does not match/i)]));
   });
 
   test('should prevent future game dates', async ({ page }) => {
-    await registerAndLogin(page);
-
-    // Add athlete
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-    await page.fill('input[id="name"]', `Future Test ${Date.now()}`);
-    await page.fill('input[id="birthday"]', '2010-01-01');
-    await page.click('input[name="gender"][value="male"]');
-    await page.selectOption('select[id="primaryPosition"]', 'ST');
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-    await page.fill('input[id="teamClub"]', 'Future FC');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to dashboard root or success indicator
-    // Must use /\/dashboard\/?$/ to avoid matching /dashboard/add-athlete
-    await Promise.race([
-      page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }),
-      page.waitForSelector('[class*="text-green"]', { timeout: 30000 }),
-    ]).catch(() => {});
-
-    // Navigate to log game through athletes list (with retry for session timing)
-    await safeGoto(page, '/dashboard/athletes');
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // Find and click the athlete link
-    const futureLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: /Future Test/i })
-    }).first();
-    await expect(futureLink).toBeVisible({ timeout: 15000 });
-    await futureLink.click();
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-
-    // Click Log a Game
-    const logBtn = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logBtn).toBeVisible({ timeout: 10000 });
-    await logBtn.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for players dropdown to load
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-
-    // Try to use future date
-    const futureDate = new Date();
-    futureDate.setFullYear(futureDate.getFullYear() + 1);
-    const futureDateStr = futureDate.toISOString().split('T')[0];
-
-    await page.fill('input#date', futureDateStr);
-    await page.fill('input#opponent', 'Future Opponent');
-    await page.selectOption('select#result', 'Win');
-    await page.fill('input#finalScore', '2-1');
-    await page.fill('input#minutesPlayed', '90');
-    await page.fill('input#goals', '1');
-    await page.fill('input#assists', '0');
-
-    // Try to submit
-    await page.locator('button[type="submit"]').filter({ hasText: /Save|Submit|Log/i }).click();
-    await page.waitForTimeout(1000);
-
-    // Check if form blocked the future date (HTML5 date validation or custom)
-    const url = page.url();
-    const stayedOnForm = url.includes('log-game');
-    const errorMessage = page.locator('text=/future|invalid date/i');
-    const hasError = await errorMessage.isVisible({ timeout: 2000 }).catch(() => false);
-
-    if (stayedOnForm || hasError) {
-      console.log('✓ Future date blocked');
-    } else {
-      // Date validation may not be implemented - note for future
-      console.log('⚠ Future date accepted (validation may not be implemented)');
-    }
-    console.log('✅ DATE VALIDATION TEST COMPLETED');
+    const player = await prepareAthlete(page, 'CM');
+    await fillGameForm(page, { athleteId: player.id, opponent: 'Future Opponent', date: '2999-01-01', position: 'CM' });
+    await page.getByRole('button', { name: 'Save Game', exact: true }).click();
+    await expect(page.getByText('Game date cannot be in the future')).toBeVisible();
+    await expect(page).toHaveURL(/log-game$/);
+    const invalid = await page.request.post('/api/games', { data: { ...gamePayload(player.id), date: '2999-01-01' } });
+    expect(invalid.status()).toBe(400);
+    expect((await invalid.json()).details.date).toEqual(expect.arrayContaining([expect.stringMatching(/future/i)]));
   });
-});
-
-test.describe('Complete User Journey - Security', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should sanitize opponent name (XSS prevention)', async ({ page }) => {
-    await registerAndLogin(page);
-
-    // Add athlete
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-    await page.fill('input[id="name"]', `Security Test ${Date.now()}`);
-    await page.fill('input[id="birthday"]', '2010-01-01');
-    await page.click('input[name="gender"][value="male"]');
-    await page.selectOption('select[id="primaryPosition"]', 'DM');
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-    await page.fill('input[id="teamClub"]', 'Security FC');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to dashboard root or success indicator
-    // Must use /\/dashboard\/?$/ to avoid matching /dashboard/add-athlete
-    await Promise.race([
-      page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }),
-      page.waitForSelector('[class*="text-green"]', { timeout: 30000 }),
-    ]).catch(() => {});
-
-    // Navigate to log game through athletes list (with retry for session timing)
-    await safeGoto(page, '/dashboard/athletes');
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // Find and click the athlete link
-    const securityLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: /Security Test/i })
-    }).first();
-    await expect(securityLink).toBeVisible({ timeout: 15000 });
-    await securityLink.click();
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-
-    // Click Log a Game
-    const logBtn = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logBtn).toBeVisible({ timeout: 10000 });
-    await logBtn.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for players dropdown to load
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-
-    // Monitor for XSS-specific alert (not legitimate app alerts like "Failed to load players")
-    let xssDetected = false;
-    page.on('dialog', async (dialog) => {
-      console.log(`[Dialog] type=${dialog.type()}, message=${dialog.message()}`);
-      if (dialog.type() === 'alert' && dialog.message().includes('XSS')) {
-        xssDetected = true;
-      }
-      await dialog.dismiss();
-    });
-
-    // Try XSS payload in opponent field
-    await page.fill('input#date', new Date().toISOString().split('T')[0]);
-    await page.fill('input#opponent', '<script>alert("XSS")</script>');
-    await page.selectOption('select#result', 'Win');
-    await page.fill('input#finalScore', '2-1');
-    await page.fill('input#minutesPlayed', '90');
-    await page.fill('input#goals', '1');
-    await page.fill('input#assists', '0');
-
-    // Capture API response to verify XSS payload handling
+    const player = await prepareAthlete(page, 'CDM');
+    const dialogs: string[] = [];
+    page.on('dialog', async (dialog) => { dialogs.push(dialog.message()); await dialog.dismiss(); });
+    await fillGameForm(page, { athleteId: player.id, opponent: '<script>alert("XSS")</script>', position: 'CDM' });
     const [response] = await Promise.all([
-      page.waitForResponse(
-        r => r.url().includes('/api/games') && r.request().method() === 'POST',
-        { timeout: 30000 }
-      ).catch(() => null),
-      page.locator('button[type="submit"]').filter({ hasText: /Save|Submit|Log/i }).click(),
+      page.waitForResponse((res) => new URL(res.url()).pathname === '/api/games' && res.request().method() === 'POST'),
+      page.getByRole('button', { name: 'Save Game', exact: true }).click(),
     ]);
-
-    await page.waitForTimeout(1000);
-
-    // Check for XSS execution (dialog would have fired)
-    if (xssDetected) {
-      throw new Error('XSS vulnerability detected! Script was executed.');
-    }
-    console.log('✓ No XSS dialog triggered during submission');
-
-    // If game was created, verify the opponent name is displayed safely
-    if (response && response.status() < 400) {
-      // Navigate to games list or athlete detail to see the stored data
-      await safeGoto(page, '/dashboard/athletes');
-      await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-      // Check page content for raw script tag (would indicate improper escaping)
-      const pageContent = await page.content();
-      const hasRawScriptTag = pageContent.includes('<script>alert("XSS")</script>');
-
-      if (hasRawScriptTag) {
-        throw new Error('XSS vulnerability: raw script tag found in page HTML');
-      }
-
-      // Verify content is either escaped or stripped
-      const isProperlyHandled = pageContent.includes('&lt;script&gt;') ||
-                                !pageContent.includes('alert("XSS")');
-      if (!isProperlyHandled) {
-        console.warn('XSS content found in unusual form - manual review recommended');
-      }
-
-      console.log('✓ XSS payload properly escaped/sanitized in stored data');
-    } else {
-      // Check if validation blocked the input
-      const errorMessage = page.locator('text=/invalid characters|sanitize/i');
-      const hasError = await errorMessage.isVisible({ timeout: 2000 }).catch(() => false);
-
-      if (hasError) {
-        console.log('✓ XSS payload blocked by validation');
-      } else {
-        console.log('✓ XSS payload handled (React auto-escapes by default)');
-      }
-    }
-    console.log('✅ SECURITY VALIDATION WORKING');
+    expect(response.status()).toBe(400);
+    expect((await response.json()).details.opponent).toEqual(expect.arrayContaining([expect.stringMatching(/invalid characters/i)]));
+    await expect(page.getByText('Please check the form fields and try again.')).toBeVisible();
+    expect(dialogs).toEqual([]);
+    const games = await page.request.get(`/api/games?playerId=${player.id}`);
+    expect((await games.json()).games).toHaveLength(0);
   });
 
   test('should enforce rate limiting (10 requests/minute)', async ({ page }) => {
-    await registerAndLogin(page);
-
-    // Add athlete
-    await page.goto('/dashboard/add-athlete');
-    await page.waitForSelector('button[type="submit"]', { timeout: 30000 });
-    await page.fill('input[id="name"]', `Rate Test ${Date.now()}`);
-    await page.fill('input[id="birthday"]', '2010-01-01');
-    await page.click('input[name="gender"][value="male"]');
-    await page.selectOption('select[id="primaryPosition"]', 'RW');
-    await page.selectOption('select[id="leagueCode"]', 'local_travel');
-    await page.fill('input[id="teamClub"]', 'Rate FC');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to dashboard root or success indicator
-    // Must use /\/dashboard\/?$/ to avoid matching /dashboard/add-athlete
-    await Promise.race([
-      page.waitForURL(/\/dashboard\/?$/, { timeout: 30000 }),
-      page.waitForSelector('[class*="text-green"]', { timeout: 30000 }),
-    ]).catch(() => {});
-
-    // Navigate to log game through athletes list (with retry for session timing)
-    await safeGoto(page, '/dashboard/athletes');
-    await page.waitForSelector('h1:has-text("Athletes")', { timeout: 10000 });
-
-    // Find and click the athlete link
-    const rateLink = page.locator('a[href*="/dashboard/athletes/"]').filter({
-      has: page.locator('h3').filter({ hasText: /Rate Test/i })
-    }).first();
-    await expect(rateLink).toBeVisible({ timeout: 15000 });
-    await rateLink.click();
-    await page.waitForURL(/\/dashboard\/athletes\//, { timeout: 30000 });
-
-    // Click Log a Game
-    const logBtn = page.locator('a[href*="log-game"]').filter({ hasText: /Log a Game/i }).first();
-    await expect(logBtn).toBeVisible({ timeout: 10000 });
-    await logBtn.click();
-    await page.waitForURL(/log-game/, { timeout: 30000 });
-
-    // Wait for players dropdown to load and select the first player
-    await page.waitForSelector('select#playerId option:not([value=""])', { state: 'attached', timeout: 30000 });
-    const firstPlayerOption = await page.locator('select#playerId option:not([value=""])').first();
-    const playerValue = await firstPlayerOption.getAttribute('value');
-    if (playerValue) {
-      await page.selectOption('select#playerId', playerValue);
+    const player = await prepareAthlete(page, 'RW');
+    for (let index = 1; index <= 10; index++) {
+      const response = await page.request.post('/api/games', { data: gamePayload(player.id, index) });
+      expect(response.status(), `request ${index}`).toBe(201);
     }
-
-    // Use direct API calls to test rate limiting (form redirects after each submission)
-    const today = new Date().toISOString().split('T')[0];
-    let blocked = false;
-
-    for (let i = 1; i <= 11; i++) {
-      const result = await page.evaluate(async ({ playerId, date, index }) => {
-        const res = await fetch('/api/games', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerId,
-            date,
-            opponent: `Rate Test ${index}`,
-            result: 'Win',
-            finalScore: '1-0',
-            minutesPlayed: 90,
-            goals: 0,
-            assists: 0,
-          }),
-        });
-        const body = await res.text();
-        return { status: res.status, body };
-      }, { playerId: playerValue || '', date: today, index: i });
-
-      if (result.status === 429 || result.body.toLowerCase().includes('rate limit')) {
-        blocked = true;
-        console.log(`✓ Rate limit triggered at request #${i} (status: ${result.status})`);
-        break;
-      }
-      console.log(`  Request #${i}: status=${result.status}`);
-    }
-
-    // Rate limiting may not be implemented yet - log result but don't fail test
-    if (blocked) {
-      console.log('✅ RATE LIMITING WORKING');
-    } else {
-      console.log('⚠ Rate limiting not triggered (may not be implemented yet)');
-    }
+    const blocked = await page.request.post('/api/games', { data: gamePayload(player.id, 11) });
+    expect(blocked.status()).toBe(429);
+    expect((await blocked.json()).error).toBe('RATE_LIMIT_EXCEEDED');
   });
 });

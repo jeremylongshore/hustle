@@ -10,12 +10,13 @@ import Link from 'next/link';
 import { POSITIONS, LEAGUES } from '@/lib/constants';
 import { getInitials, getAvatarColor } from '@/lib/player-utils';
 import { cn } from '@/lib/utils';
+import { isPastOrTodayDate } from '@/lib/validations/athlete-date';
 
 // ─── Schema ───────────────────────────────────────────────────
 export const athleteSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required').refine(isPastOrTodayDate, 'Date of birth must be a valid date and cannot be in the future'),
   gender: z.enum(['male', 'female', 'other']),
   position: z.string().min(1, 'Position is required'),
   teamName: z.string().optional(),
@@ -239,6 +240,7 @@ export function AthleteForm({
               <input
                 type="date"
                 {...register('dateOfBirth')}
+                max={new Date().toISOString().slice(0, 10)}
                 className={cn(inputCls, errors.dateOfBirth && 'border-red-300')}
               />
               <FieldError msg={errors.dateOfBirth?.message} />

@@ -10,11 +10,14 @@ import { ChevronLeft, ChevronDown, Loader2, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { POSITIONS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { isPastOrTodayDate } from '@/lib/validations/athlete-date';
 
 interface PlayerData {
   id: string;
   name: string;
   teamClub?: string;
+  primaryPosition?: string;
+  position?: string;
 }
 
 // ─── Schema ──────────────────────────────────────────────────
@@ -23,7 +26,7 @@ const num = (min: number, max: number, msg?: string) =>
 
 const gameSchema = z.object({
   athleteId: z.string().min(1, 'Please select an athlete'),
-  date: z.string().min(1, 'Date is required'),
+  date: z.string().min(1, 'Date is required').refine(isPastOrTodayDate, 'Game date cannot be in the future'),
   opponent: z.string().min(2, 'Opponent name is required').max(60),
   teamScore: num(0, 30),
   opponentScore: num(0, 30),
@@ -35,6 +38,14 @@ const gameSchema = z.object({
   yellowCards: num(0, 2),
   redCards: num(0, 1),
   notes: z.string().max(300).optional(),
+  saves: num(0, 50),
+  goalsAgainst: num(0, 20),
+  cleanSheet: z.boolean(),
+  tackles: num(0, 50),
+  interceptions: num(0, 30),
+  clearances: num(0, 50),
+  blocks: num(0, 20),
+  aerialDuelsWon: num(0, 30),
 });
 
 // Zod v4: coerce/preprocess outputs are typed as unknown; define types manually
@@ -52,6 +63,14 @@ type GameFormValues = {
   yellowCards: number;
   redCards: number;
   notes?: string;
+  saves: number;
+  goalsAgainst: number;
+  cleanSheet: boolean;
+  tackles: number;
+  interceptions: number;
+  clearances: number;
+  blocks: number;
+  aerialDuelsWon: number;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -75,11 +94,13 @@ const selectCls =
 
 // Number stepper component
 function Stepper({
+  label,
   value,
   onChange,
   min = 0,
   max = 20,
 }: {
+  label: string;
   value: number;
   onChange: (v: number) => void;
   min?: number;
@@ -89,6 +110,7 @@ function Stepper({
     <div className="flex items-center gap-0 rounded-xl border border-zinc-200 overflow-hidden bg-white">
       <button
         type="button"
+        aria-label={`Decrease ${label}`}
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
         className="px-3 py-3 hover:bg-zinc-50 transition-colors disabled:opacity-30"
@@ -100,6 +122,7 @@ function Stepper({
       </span>
       <button
         type="button"
+        aria-label={`Increase ${label}`}
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={value >= max}
         className="px-3 py-3 hover:bg-zinc-50 transition-colors disabled:opacity-30"
@@ -148,6 +171,7 @@ export default function LogGamePage() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<GameFormValues>({
     resolver: zodResolver(gameSchema) as Resolver<GameFormValues>,
@@ -161,8 +185,16 @@ export default function LogGamePage() {
       shots: 0,
       yellowCards: 0,
       redCards: 0,
+      saves: 0, goalsAgainst: 0, cleanSheet: false,
+      tackles: 0, interceptions: 0, clearances: 0, blocks: 0, aerialDuelsWon: 0,
     },
   });
+
+  const selectedAthleteId = watch('athleteId');
+  const selectedAthlete = players.find((player) => player.id === selectedAthleteId);
+  const selectedPosition = watch('position') || selectedAthlete?.primaryPosition || selectedAthlete?.position;
+  const isGoalkeeper = selectedPosition === 'GK' || selectedPosition === 'Goalkeeper';
+  const isDefender = ['CB', 'LB', 'RB', 'LWB', 'RWB', 'Defender'].includes(selectedPosition ?? '');
 
   const syncStepper = (
     field: 'goals' | 'assists' | 'shots' | 'yellowCards' | 'redCards',
@@ -198,14 +230,14 @@ export default function LogGamePage() {
           minutesPlayed: finalData.minutesPlayed,
           goals: finalData.goals,
           assists: finalData.assists,
-          tackles: 0,
-          interceptions: 0,
-          clearances: 0,
-          blocks: 0,
-          aerialDuelsWon: 0,
-          saves: 0,
-          goalsAgainst: 0,
-          cleanSheet: false,
+          tackles: isDefender ? finalData.tackles : 0,
+          interceptions: isDefender ? finalData.interceptions : 0,
+          clearances: isDefender ? finalData.clearances : 0,
+          blocks: isDefender ? finalData.blocks : 0,
+          aerialDuelsWon: isDefender ? finalData.aerialDuelsWon : 0,
+          saves: isGoalkeeper ? finalData.saves : 0,
+          goalsAgainst: isGoalkeeper ? finalData.goalsAgainst : 0,
+          cleanSheet: isGoalkeeper && finalData.cleanSheet,
         }),
       });
 
@@ -415,6 +447,7 @@ export default function LogGamePage() {
                   {label}
                 </label>
                 <Stepper
+                  label={label}
                   value={val}
                   onChange={(v) => syncStepper(field, setter, v)}
                   max={max ?? 20}
@@ -422,6 +455,39 @@ export default function LogGamePage() {
               </div>
             ))}
           </div>
+
+          {isGoalkeeper && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="saves" className="font-body text-sm">Saves</label>
+                <input id="saves" type="number" {...register('saves')} min={0} max={50} className={inputCls} />
+                <FieldError msg={errors.saves?.message} />
+              </div>
+              <div>
+                <label htmlFor="goalsAgainst" className="font-body text-sm">Goals Against</label>
+                <input id="goalsAgainst" type="number" {...register('goalsAgainst')} min={0} max={20} className={inputCls} />
+                <FieldError msg={errors.goalsAgainst?.message} />
+              </div>
+              <label className="font-body text-sm flex items-center gap-2">
+                <input id="cleanSheet" type="checkbox" {...register('cleanSheet')} /> Clean Sheet
+              </label>
+            </div>
+          )}
+          {isDefender && (
+            <div className="grid grid-cols-2 gap-4">
+              {([
+                ['tackles', 'Tackles', 50], ['interceptions', 'Interceptions', 30],
+                ['clearances', 'Clearances', 50], ['blocks', 'Blocks', 20],
+                ['aerialDuelsWon', 'Aerial Duels Won', 30],
+              ] as const).map(([field, label, max]) => (
+                <div key={field}>
+                  <label htmlFor={field} className="font-body text-sm">{label}</label>
+                  <input id={field} type="number" {...register(field)} min={0} max={max} className={inputCls} />
+                  <FieldError msg={errors[field]?.message} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Cards */}
           <div className="pt-4 border-t border-zinc-100">
@@ -435,6 +501,7 @@ export default function LogGamePage() {
                   </label>
                 </div>
                 <Stepper
+                  label="Yellow Cards"
                   value={yellowCards}
                   onChange={(v) => syncStepper('yellowCards', setYellowCards, v)}
                   max={2}
@@ -448,6 +515,7 @@ export default function LogGamePage() {
                   </label>
                 </div>
                 <Stepper
+                  label="Red Cards"
                   value={redCards}
                   onChange={(v) => syncStepper('redCards', setRedCards, v)}
                   max={1}

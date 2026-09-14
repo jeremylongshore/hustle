@@ -4,12 +4,13 @@
  * These tests verify that the login page:
  * 1. Never hangs indefinitely (has proper timeout handling)
  * 2. Shows appropriate error messages for various failure modes
- * 3. Properly handles Firebase Auth errors
+ * 3. Properly handles Auth.js request errors
  *
  * IMPORTANT: These tests help prevent P0 incidents where users see a "frozen" login page.
  */
 
 import { test, expect } from '@playwright/test';
+import { E2E_TEST_USER } from './global-setup';
 
 test.describe('Login Behavior - Error Handling', () => {
   test('should show error for invalid credentials (not hang)', async ({ page }) => {
@@ -23,7 +24,7 @@ test.describe('Login Behavior - Error Handling', () => {
     await page.click('button[type="submit"]');
 
     // Should show an error within 35 seconds (not hang forever)
-    // Firebase Auth typically responds within 5s, but we allow extra time for slow networks
+    // The credentials endpoint normally responds within 5s, but we allow extra time for slow networks
     const errorLocator = page.locator('[class*="red"], [class*="error"], [role="alert"]').first();
     await expect(errorLocator).toBeVisible({ timeout: 35000 });
 
@@ -56,38 +57,29 @@ test.describe('Login Behavior - Error Handling', () => {
     await expect(passwordInput).toBeFocused();
   });
 
-  test('should not hang when server is slow (timeout handling)', async ({ page }) => {
-    // This test verifies that even if the API is slow, the page doesn't freeze
+  test('should not hang when the credentials endpoint is slow', async ({ page }) => {
     await page.goto('/login');
-
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.fill('input[type="password"]', 'password123');
-
-    // Intercept the set-session call and make it slow
-    await page.route('/api/auth/set-session', async (route) => {
-      // Delay for 20 seconds (longer than our 15s timeout)
-      await new Promise((resolve) => setTimeout(resolve, 20000));
-      await route.continue();
+    await page.fill('input[type="email"]', 'fixture@example.com');
+    await page.fill('input[type="password"]', 'fixture-password');
+    let intercepted = false;
+    await page.route('**/api/auth/callback/credentials**', async route => {
+      intercepted = true;
+      await new Promise(resolve => setTimeout(resolve, 20_000));
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
     });
-
     await page.click('button[type="submit"]');
-
-    // Should show timeout error within 35 seconds, not hang forever
-    const pageContent = page.locator('body');
-
-    // Either an error appears or we timeout at 60s (test framework timeout)
-    await Promise.race([
-      expect(page.locator('[class*="red"], [class*="error"]').first()).toBeVisible({ timeout: 60000 }),
-      expect(page.locator('button[type="submit"]')).toBeEnabled({ timeout: 60000 }),
-    ]);
+    await expect(page.getByText('Sign-in timed out. Please try again.')).toBeVisible({ timeout: 18_000 });
+    expect(intercepted, 'the real Auth.js endpoint must have been delayed').toBe(true);
+    await expect(page.locator('button[type="submit"]')).toBeEnabled();
   });
+
 });
 
 test.describe('Login Behavior - Success Path', () => {
-  const email = process.env.SMOKE_TEST_EMAIL;
-  const password = process.env.SMOKE_TEST_PASSWORD;
+  const email = process.env.SMOKE_TEST_EMAIL || E2E_TEST_USER.email;
+  const password = process.env.SMOKE_TEST_PASSWORD || E2E_TEST_USER.password;
 
-  test.skip(!email || !password, 'Set SMOKE_TEST_EMAIL and SMOKE_TEST_PASSWORD to run success tests.');
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('should redirect to dashboard after successful login', async ({ page }) => {
     await page.goto('/login');
@@ -161,25 +153,10 @@ test.describe('Login Page Console Errors', () => {
     expect(breakingErrors).toHaveLength(0);
   });
 
-  test('should show Firebase config loaded message in console', async ({ page }) => {
-    const consoleMessages: string[] = [];
-
-    page.on('console', (msg) => {
-      consoleMessages.push(msg.text());
-    });
-
-    await page.goto('/login');
-    await page.waitForLoadState('networkidle');
-
-    // Check that Firebase config is loaded
-    const hasFirebaseLog = consoleMessages.some(
-      (msg) => msg.includes('[Firebase]') && msg.includes('Config loaded')
-    );
-
-    if (!hasFirebaseLog) {
-      console.warn('WARNING: Firebase config loaded message not found. Check NEXT_PUBLIC_ env vars.');
-    }
-
-    // Don't fail the test - just log warning. This helps diagnose production issues.
+  test('should expose the configured Auth.js credentials provider', async ({ page }) => {
+    const response = await page.request.get('/api/auth/providers');
+    expect(response.ok()).toBe(true);
+    expect(await response.json()).toMatchObject({ credentials: { type: 'credentials' } });
   });
+
 });
