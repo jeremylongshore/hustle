@@ -1,7 +1,7 @@
 # Hustle: Operator-Grade System Analysis
 
 *Generated: 2026-09-18*
-*Version: `main` after PRs #59–#62 merged and deployed (release **v2.2.0**, 2026-09-18). PR #63 (`AUTH_URL`) was in CI at the time of writing.*
+*Version: `main` after PRs #59–#64 merged and deployed (release **v2.2.2**, 2026-09-18).*
 *Audience: Ravi (new collaborator) and anyone else joining the build.*
 *Companion docs: 280 vision · 281 roadmap · 282 monetization · 283 app-store pathway · 284 competitive landscape · 285 minor-safety compliance*
 
@@ -10,12 +10,14 @@
 ## 1. This System in 5 Minutes
 
 Hustle (hustlestats.io) is a web app for **youth soccer athletes aged 13–18 and their parents**. Today a parent creates an account, adds one or more athletes, and then logs:
+
 - games with stats
 - practices
 - workouts, cardio, meals, biometrics, and journal entries (the "Dream Gym" suite)
 - a schedule
 
 Claude generates training recommendations. A Stripe subscription system (Free / Starter / Plus / Pro) is fully built but **switched off**. The reboot plan (docs 280–285, merged 2026-09-18) turns this into a one-stop athlete app with five pillars:
+
 - verified stats
 - AI gym plans
 - a unified calendar
@@ -27,6 +29,7 @@ Mobile apps come last.
 Technically it is **one Next.js 16 application**, covering both the UI and every API route, running as **one Docker container** on the Intent Solutions VPS (`intentsolutions`, Contabo, 167.86.106.29). Data lives in **one SQLite file** (`/data/hustle.db`) on a Docker volume, accessed through Drizzle ORM. Authentication is Auth.js (NextAuth v5 beta) with email and password, JWT sessions, and mandatory email verification. Caddy terminates TLS and reverse-proxies to the container on `127.0.0.1:8084`. There is no Kubernetes, no managed database, no Redis, and no cloud provider. GCP and Firebase were removed in May–July 2026.
 
 Deploys are **fully automatic**:
+
 1. You merge to `main`.
 2. GitHub Actions builds the app.
 3. Actions SSHes into the VPS over Tailscale with a key that can only run one command.
@@ -38,7 +41,8 @@ There is **no automatic rollback**. If the smoke test fails, a human fixes forwa
 **The code is far ahead of the usage.** Production has **3 user accounts, 0 athletes, 0 games, 0 workspaces**, per a row-count check against both the live DB and last night's backup on 2026-09-18. The codebase holds roughly 49,000 lines of TypeScript across 66 API routes and 40 pages, with ~900 unit tests and 87 E2E tests (all passing locally and in CI). In practice we are building a product for its first real users. We are not maintaining a live system with customers, and that is the right mental model for risk. Breaking prod is cheap today; it won't be once families are on it.
 
 **The three biggest risks right now:**
-1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both are fixed in PR #62, which merges first (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
+
+1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both were fixed and deployed in #62 on 2026-09-18 (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
 2. **AI features are dead in production.** `ANTHROPIC_API_KEY` is not in the prod environment, so every AI route throws (§8.2).
 3. **The product handles minors' data**, and the safety and consent foundation (doc 285) is not built yet. Nothing public-facing (recruiting profiles, video, leaderboards) ships until it is.
 
@@ -49,6 +53,7 @@ There is **no automatic rollback**. If the smoke test fails, a human fixes forwa
 ### What It Does
 
 Hustle is a parent-owned tracking app for youth soccer players. A **workspace** is the tenant, owned by a parent **user**, and it contains **players** (athletes). Each player accumulates:
+
 - **games**, with position-specific stats (goals, assists, saves, clean sheets) and a `verified` flag set by a PIN check
 - **practice logs**
 - **Dream Gym** data: workout logs with sets and reps, cardio logs, meal logs ("Fuel Station"), biometrics, assessments, journal entries, schedule events, and a Dream Gym profile/strategy record
@@ -56,6 +61,7 @@ Hustle is a parent-owned tracking app for youth soccer players. A **workspace** 
 An analytics page aggregates game stats. `/api/ai/recommend` and `/api/players/[id]/dream-gym/ai-strategy` call Claude for tips and workout strategies.
 
 Billing is real code:
+
 - Stripe Checkout and the Customer Portal
 - two webhook endpoints (plan and status convergence in one, notification email in the other)
 - an idempotency table (`webhookEvent`) and a billing ledger (`billingLedger`)
@@ -341,7 +347,7 @@ hustle/
 └── AGENTS.md CLAUDE.md      # agent instructions ("This is NOT the Next.js you know" + beads workflow)
 ```
 
-On `main` today, `nwsl/`, `tmp/`, `tools/`, `docs/`, the `google-adk-reference` symlink, and `src/app/games/` still exist. PR #59 removes them.
+PR #59 (merged) removed the old `nwsl/`, `tmp/`, `tools/`, `docs/`, the `google-adk-reference` symlink, and `src/app/games/`. If you see them in an old clone, pull.
 
 ### Load-Bearing Files
 
@@ -445,10 +451,12 @@ On `main` today, `nwsl/`, `tmp/`, `tools/`, `docs/`, the `google-adk-reference` 
 ### Deployment
 
 **Pre-flight (on the PR):**
+
 - CI must be green: **Lint, Type Check, and Test** (lint, tsc, build, unit, integration, Chromium E2E), **Build Docker Image** (Docker build plus container smoke on `/api/healthz`), **Pre-merge Validation**, and **Auto-Fix Linting Issues**.
 - There is **no AI reviewer** on this repo. CI is the gate.
 
 **What happens on merge:**
+
 1. `deploy.yml` → `build-gate` job: the secret scanner (`scripts/check-resend-secrets.py`), then `npm ci` and `npm run build` on Node 22.
 2. `deploy` job → the shared `jeremylongshore/.github/.github/workflows/vps-deploy.yml@53d6be37…`:
    - Tailscale OIDC join
@@ -469,6 +477,7 @@ ssh intentsolutions 'docker inspect hustle-app --format "{{.State.StartedAt}}"' 
 ```
 
 **Rollback protocol (manual; there is no automatic rollback):**
+
 1. **Preferred, revert on GitHub:** `gh pr revert <PR#>` or `git revert <sha> && git push` through a PR. Merging it redeploys the previous code.
 2. **Emergency** (CI is broken, or the site must come back now):
    ```bash
@@ -561,7 +570,7 @@ Ordered by likelihood × impact.
 - **Fix:** watch `/api/health/email` (the deploy smoke test already requires it to pass). Locally, use the SQL in §6 step 5.
 - **Prevention:** keep the SMTP readiness probe in the deploy gate. Don't weaken the gate, because it's the COPPA-relevant parent verification.
 
-### 8.9 Rate limiting assumes Caddy is the only proxy (PR #60)
+### 8.9 Rate limiting assumes Caddy is the only proxy
 - **Symptom (if the topology changes):** every user shares one rate-limit bucket and logins start failing with 429.
 - **Cause:** `clientIp()` takes the right-most `X-Forwarded-For` entry, which is correct only while Caddy talks directly to clients with no `trusted_proxies`. `dig +short hustlestats.io` = `167.86.106.29` (no CDN).
 - **Fix/Prevention:** if Cloudflare or any other proxy is ever put in front, configure Caddy `trusted_proxies` and revisit `src/lib/rate-limit.ts`. `RATE_LIMIT_SCALE` exists only for E2E, and it only loosens the per-IP rules.
@@ -614,6 +623,7 @@ Ordered by likelihood × impact.
 ### Honest Security Assessment
 
 **Implemented:**
+
 - bcrypt password hashes
 - mandatory email verification
 - JWT sessions with a server secret
@@ -629,11 +639,13 @@ Ordered by likelihood × impact.
 - a tailnet-only VPS SSH
 - nightly consistent backups with an off-site immutable copy, restore proven 2026-09-18
 
-**In flight (open PRs):**
+**Shipped 2026-09-18:**
+
 - #60: brute-force rate limits on sign-in, registration, password reset, verification mail, PIN, and game creation (**none existed before**)
 - #61: every critical and high npm advisory patched (Auth.js and Next.js criticals among them)
 
 **Not implemented / weak:**
+
 - The admin fail-open, fixed in PR #62 (§8.1).
 - No MFA for parents.
 - No account lockout notifications.
@@ -704,7 +716,7 @@ Ordered by likelihood × impact.
 ### What Needs Attention
 
 - **High:**
-  - Admin fail-open and cross-family debug reads → fixed in PR #62; merge it first (`hustle-4dc.1`).
+  - Admin fail-open and cross-family debug reads → fixed and deployed in #62 (`hustle-4dc.1`, closed).
   - Ownership lives only in route handlers, not queries → one missed check leaks data → `hustle-4dc.2`.
   - Stripe webhooks unreachable, with duplicate handlers → billing would silently break → `hustle-rs5.1` (blocks P2).
   - Minors' safety foundation absent → can't ship public or social features → P1 (285, counsel review).
@@ -722,7 +734,7 @@ Ordered by likelihood × impact.
   - Stale Firebase config and README.
   - Dead `src/env.mjs`.
   - About a third of API routes are dead or duplicated (`hustle-pk7.9`).
-  - Orphan v2.0.0 GitHub release.
+  - Orphan v2.0.0 GitHub release (harmless since the `v2.1.0` baseline tag; delete it if you like).
   - 157 ESLint warnings.
 
 ### Test Coverage (measured 2026-09-18)
@@ -760,6 +772,7 @@ Critical files:
 | `src/app/api/webhooks/stripe` | **0%** |
 
 **How to read this.** Unit coverage is strong on the pure domain rules (enforcement, limits, validation) and weak on route handlers and UI.
+
 - The **E2E suite** (9 specs) covers much of what unit tests miss: sign-in, registration, games, athletes, Dream Gym. It **passed 87/87 locally on 2026-09-18** (`CI=1 npx playwright test --project=chromium`, 4.7 min) and passes in CI. It isn't counted in these numbers.
 - Real gaps with no automated test at any layer:
   - both Stripe webhooks (and they're unreachable anyway, §8.12)
@@ -791,12 +804,14 @@ Critical files:
 | Error tracking / APM | ❌ None | `src/instrumentation.ts` is empty |
 
 **Merged and deployed on 2026-09-18** (each verified with `/api/health` = healthy after its deploy):
+
 - **#59** (P0 part 1): dead code removal, Release fix, and plan-limit single source. Also carries the `bd init` beads wiring commit.
 - **#60:** the SQLite rate limiter (new migration `0004_rate_limits.sql`).
 - **#61:** Next 16.3.5 and the Auth.js security bumps.
 - **#62:** the admin allow-list fails closed (`ADMIN_USER_IDS`), and the debug/hello/test-post routes are removed. Confirmed absent from the prod build.
 - **Production proof for #60:** the same email failed sign-in 10 times with `CredentialsSignin`, and the 11th attempt got `RATE_LIMITED`.
-- **Open: #63** sets `AUTH_URL` from `APP_ORIGIN`. Without it Auth.js builds URLs from the container bind address (`https://0.0.0.0:8084/...`, seen in `/api/auth/providers`). Sign-in still works because the login page ignores those URLs, but Auth.js-driven redirects would break.
+- **#63:** `AUTH_URL` is set from `APP_ORIGIN`. Before this, Auth.js built URLs from the container bind address (`https://0.0.0.0:8084/...`). Verified after deploy: `/api/auth/providers` shows `https://hustlestats.io/...`.
+- **#64:** this document.
 
 ---
 
@@ -805,8 +820,8 @@ Critical files:
 This mirrors `000-docs/281-PP-RMAP-finish-roadmap.md`. Each phase has an **exit gate**. Tracking: GitHub issues **#52 (P0) through #58 (P6)**, Plane **HST-2 through HST-8**, beads epics `hustle-pk7`, `-4dc`, `-rs5`, `-ebv`, `-9vd`, `-5ng`, `-oyd`.
 
 ### Week 1 — Stabilization (finish P0, start P1)
-- Merge #59, #61, then #60. Each deploy shows `/api/health` = healthy.
-- Merge PR #62 (admin fail-closed), then set `ADMIN_USER_IDS` on the VPS.
+- ✓ Done 2026-09-18: #59–#64 merged and deployed, each with `/api/health` = healthy.
+- Set `ADMIN_USER_IDS` on the VPS (owner action) so the admin tools work again.
 - Add `ANTHROPIC_API_KEY` to compose and the VPS `.env`. `/api/ai/recommend` works in prod.
 - Node 22 in CI; `engines` and `.nvmrc` added.
 - Remove the Dockerfile Firebase args and the dead `src/env.mjs`. Rewrite `.env.example` and the README. (The debug and test routes are already gone in #62.)
@@ -858,6 +873,7 @@ This mirrors `000-docs/281-PP-RMAP-finish-roadmap.md`. Each phase has an **exit 
 - [ ] (Optional) Tailscale access to the VPS for logs, if Jeremy grants it
 
 **Working conventions:**
+
 - Branch from `origin/main`, never commit to `main`.
 - Commits are `type(scope): imperative subject`, with a body covering what, why, and how it was verified.
 - PRs state: what, why, layers touched, verification evidence, risk, rollback, and what remains.
@@ -894,6 +910,7 @@ This mirrors `000-docs/281-PP-RMAP-finish-roadmap.md`. Each phase has an **exit 
 ### C. Troubleshooting Playbooks
 
 **Site returns 502**
+
 1. `ssh intentsolutions 'docker ps --filter name=hustle-app'`. Is it up, and is it restarting?
 2. `docker logs --tail 200 hustle-app`. Look for boot errors or `[db] migration error`.
 3. `curl -fsS http://127.0.0.1:8084/api/healthz` on the VPS.
@@ -902,11 +919,13 @@ This mirrors `000-docs/281-PP-RMAP-finish-roadmap.md`. Each phase has an **exit 
 
 **Health says `unhealthy`**
 `/api/health` lists the failing check:
+
 - `database`: volume or file problem.
 - `environment.missing[]`: a required env var is absent. For example, `STRIPE_SECRET_KEY` shows up whenever billing is considered enabled, which is why `BILLING_ENABLED=false` is set explicitly.
 - `email`: see the SMTP runbook (278).
 
 **Nobody can sign in**
+
 1. Check `/api/health/email`. If users can't verify, they can't sign in.
 2. Check whether `SESSION_SECRET`/`AUTH_SECRET` changed. That invalidates every session and would break new sessions if it were removed.
 3. After PR #60, a 429 or the "Too many sign-in attempts" message means the rate limiter tripped. The window is 15 minutes; per-IP limits reset on their own.
@@ -917,7 +936,7 @@ Check that the key is present: `ssh intentsolutions 'grep -c ANTHROPIC /srv/hust
 ### D. Open Questions (for Jeremy)
 1. **Merge rights for Ravi:** can he merge to `main` (which deploys to prod), or only open PRs?
 2. **VPS access for Ravi:** tailnet and log access, or GitHub-only?
-3. **The orphan v2.0.0 GitHub release:** delete it, or seed a matching `v2.0.0` tag, before the next auto-release creates `v1.x`?
+3. **The orphan v2.0.0 GitHub release:** keep it or delete it? It no longer affects releases, which now build from the `v2.1.0` baseline tag.
 4. **Error tracking:** self-hosted (GlitchTip/Sentry OSS on the VPS) or log-based Slack alerts?
 5. **Counsel for doc 285:** who, and when? P1 can't close without it.
 6. **D-U-N-S / app-store org accounts:** started?
