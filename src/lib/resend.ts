@@ -1,19 +1,5 @@
-import { Resend } from 'resend';
-
-let _resend: Resend | null = null;
-function getResend(): Resend {
-  if (!_resend) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY environment variable is not set');
-    }
-    _resend = new Resend(process.env.RESEND_API_KEY);
-  }
-  return _resend;
-}
-
-// Use onboarding@resend.dev until hustleapp.co domain is verified in Resend dashboard.
-// After domain verification, change to: 'Hustle <noreply@hustleapp.co>'
-const FROM = 'Hustle <onboarding@resend.dev>';
+// Compatibility exports for existing auth routes; all delivery uses configured SMTP.
+import { sendTransactionalEmail } from './smtp';
 
 export async function sendVerificationEmail(
   to: string,
@@ -65,13 +51,11 @@ export async function sendVerificationEmail(
 </body>
 </html>`;
 
-  const { error } = await getResend().emails.send({
-    from: FROM,
+  await sendTransactionalEmail({
     to,
     subject: 'Verify your Hustle email',
     html,
   });
-  if (error) throw new Error(`Resend error (verification): ${JSON.stringify(error)}`);
 }
 
 export async function sendPasswordResetEmail(
@@ -123,11 +107,9 @@ export async function sendPasswordResetEmail(
 </body>
 </html>`;
 
-  const { error } = await getResend().emails.send({
-    from: FROM,
+  await sendTransactionalEmail({
     to,
     subject: 'Reset your Hustle password',
     html,
   });
-  if (error) throw new Error(`Resend error (password-reset): ${JSON.stringify(error)}`);
 }

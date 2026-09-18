@@ -18,7 +18,8 @@ It was not using either revoked value. Registration and reset helpers still
 called Resend, while the generic notification helper also required `EMAIL_FROM`,
 which the deployed Compose service did not pass. A source scrub alone cannot
 restore email delivery. The established estate sender is MXroute; restoring
-application mail through that path is a separate runtime verification task.
+application mail through that path is the separate runtime correction described
+in [the SMTP operations runbook](6784-OD-RUNB-smtp-email-operations.md).
 
 ## UTC evidence and repair history
 
@@ -121,6 +122,31 @@ Private sanitized receipts are in the operator's alert-review bundle under
 `20260913T193100Z/hustle-resend/`. Mail bodies and private configuration remain
 outside Git. No test email was sent during baseline verification. Account-level
 audit history and recipient delivery are not established by credential rejection.
+
+## SMTP followup evidence
+
+The existing approved MXroute connection passed certificate-validated TLS,
+SMTP authentication and NOOP from the VPS at 19:44:58.920051 UTC on September
+13; no message was submitted. At 20:17:16 UTC, the exact old image, environment,
+Compose and installed helper were captured with an online SQLite backup whose
+integrity check passed. At 20:20:12 UTC, six SMTP environment values were
+prepared privately; candidate Compose validation proved every unrelated
+resolved value remained identical. That step did not recreate the container.
+
+The runtime correction consolidates both mail helpers on the maintained SMTP
+transport and repairs the resend-verification endpoint's obsolete Resend guard.
+It adds configuration health and a distinct no-send authentication probe, with
+safe errors, strict TLS, an absolute probe deadline and bounded cached results.
+Fixture tests do not send external mail. The complete SMTP candidate suite
+passes 858 tests across 61 files with two workers; the original parallel run's
+six timeout/closed-connection failures are retained in the private evidence.
+Lint reports zero errors and 157 existing warnings, and TypeScript passes.
+The package audit still exits 1: the exact baseline has 35 findings, the SMTP
+candidate has 32, with no newly affected package. Removing Resend also removes
+its Svix/UUID advisories. Existing critical Next/Auth findings are not described
+as resolved by this mail repair. Deployment evidence must be added
+only after the reviewed commit actually runs; configuration preparation alone
+is not a production cutover claim.
 
 ## References
 

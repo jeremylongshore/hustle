@@ -45,12 +45,12 @@ jobs:
     with:
       variant: docker
       srv-path: /srv/hustle
-      health-check-url: https://hustlestats.io/api/healthz
+      health-check-url: https://hustlestats.io/api/health/email
       vps-tailnet-ip: 100.88.144.55
       vps-public-ip: 167.86.106.29
       vps-host: intentsolutions
       vps-user: intentsolutions
-      smoke-validation: '.ok == true'
+      smoke-validation: '.status == "pass" and .transport == "smtp" and .check == "tls-authentication"'
     secrets:
       TS_OIDC_CLIENT_ID: ${{ secrets.TS_OIDC_CLIENT_ID }}
       TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}

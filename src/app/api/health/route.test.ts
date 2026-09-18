@@ -20,6 +20,9 @@ beforeEach(() => {
   closeDb = close;
   mockDbModule(testDb);
   vi.resetModules();
+  setEnv({ SMTP_HOST: 'smtp.example.invalid', SMTP_USER: 'fixture@example.invalid',
+    SMTP_PASS: 'fixture-password', SMTP_PORT: '465', SMTP_SECURE: 'true',
+    EMAIL_FROM: 'fixture@example.invalid' });
 });
 
 afterEach(() => {
@@ -52,7 +55,6 @@ describe("GET /api/health", () => {
     setEnv({
       NODE_ENV: "production",
       STRIPE_SECRET_KEY: "sk_test",
-      RESEND_API_KEY: "rk",
       EMAIL_FROM: "from@example.com",
     });
     const { GET } = await import("./route");
@@ -89,6 +91,17 @@ describe("GET /api/health", () => {
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.status).toBe("healthy");
+  });
+
+  it("does not label missing email configuration as healthy", async () => {
+    setEnv({ NODE_ENV: "development", BILLING_ENABLED: "false", SMTP_PASS: undefined });
+    const { GET } = await import("./route");
+    const res = await GET();
+    const body = await res.json();
+    expect(res.status).toBe(503);
+    expect(body.status).toBe("degraded");
+    expect(body.checks.email.missing).toEqual(["SMTP_PASS"]);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("response shape includes version + service + latencyMs", async () => {

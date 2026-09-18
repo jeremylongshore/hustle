@@ -2,7 +2,7 @@
  * Email Service Tests
  *
  * Tests for sendEmail() in src/lib/email.ts.
- * Verifies configuration guards, Resend integration, and error handling.
+ * Verifies configuration guards, SMTP integration, and error handling.
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -15,14 +15,19 @@ const mocks = vi.hoisted(() => ({
   emailsSend: vi.fn(),
 }));
 
-// Mock the Resend class before any imports. vitest 4 rejects arrow-function
-// mockImplementation as "not a constructor" when the caller does `new Resend(...)`,
-// so the mock has to be a real class declaration.
-vi.mock('resend', () => ({
-  Resend: class {
-    emails = { send: mocks.emailsSend };
+vi.mock('smtp-mailer', () => ({
+  default: {
+    createTransport: vi.fn(() => ({ sendMail: mocks.emailsSend, close: vi.fn() })),
   },
 }));
+
+beforeEach(() => {
+  vi.stubEnv('SMTP_HOST', 'smtp.example.invalid');
+  vi.stubEnv('SMTP_USER', 'sender@example.invalid');
+  vi.stubEnv('SMTP_PORT', '465');
+  vi.stubEnv('SMTP_SECURE', 'true');
+});
+afterEach(() => vi.unstubAllEnvs());
 
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
@@ -76,30 +81,30 @@ describe('sendEmail() — configuration guards', () => {
     vi.clearAllMocks();
   });
 
-  it('returns failure when RESEND_API_KEY is not set', async () => {
-    const restore = setEnv({ RESEND_API_KEY: undefined, EMAIL_FROM: 'noreply@example.com' });
+  it('returns failure when SMTP_PASS is not set', async () => {
+    const restore = setEnv({ SMTP_PASS: undefined, EMAIL_FROM: 'noreply@example.com' });
 
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/not configured/i);
+    expect(result.error).toMatch(/configuration/i);
 
     restore();
   });
 
   it('returns failure when EMAIL_FROM is not set', async () => {
-    const restore = setEnv({ RESEND_API_KEY: 're_test_key', EMAIL_FROM: undefined });
+    const restore = setEnv({ SMTP_PASS: 'fixture-password', EMAIL_FROM: undefined });
 
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/not configured/i);
+    expect(result.error).toMatch(/configuration/i);
 
     restore();
   });
 
-  it('does not call Resend when RESEND_API_KEY is missing', async () => {
-    const restore = setEnv({ RESEND_API_KEY: undefined, EMAIL_FROM: 'noreply@example.com' });
+  it('does not call SMTP when SMTP_PASS is missing', async () => {
+    const restore = setEnv({ SMTP_PASS: undefined, EMAIL_FROM: 'noreply@example.com' });
 
     await sendEmail(validOptions);
 
@@ -108,8 +113,8 @@ describe('sendEmail() — configuration guards', () => {
     restore();
   });
 
-  it('does not call Resend when EMAIL_FROM is missing', async () => {
-    const restore = setEnv({ RESEND_API_KEY: 're_test_key', EMAIL_FROM: undefined });
+  it('does not call SMTP when EMAIL_FROM is missing', async () => {
+    const restore = setEnv({ SMTP_PASS: 'fixture-password', EMAIL_FROM: undefined });
 
     await sendEmail(validOptions);
 
@@ -128,22 +133,22 @@ describe('sendEmail() — successful delivery', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    restore = setEnv({ RESEND_API_KEY: 're_test_key', EMAIL_FROM: 'noreply@hustlestats.io' });
-    mocks.emailsSend.mockResolvedValue({ data: { id: 'email-id-123' }, error: null });
+    restore = setEnv({ SMTP_PASS: 'fixture-password', EMAIL_FROM: 'noreply@hustlestats.io' });
+    mocks.emailsSend.mockResolvedValue({ accepted: ['recipient@example.com'], rejected: [], messageId: 'email-id-123' });
   });
 
   afterEach(() => {
     restore();
   });
 
-  it('returns success with data when Resend accepts the email', async () => {
+  it('returns success with data when SMTP accepts the email', async () => {
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(true);
-    expect((result as any).data).toEqual({ id: 'email-id-123' });
+    expect(result).toEqual({ success: true, data: { id: 'email-id-123' } });
   });
 
-  it('passes the correct payload to Resend emails.send()', async () => {
+  it('passes the correct payload to SMTP sendMail()', async () => {
     await sendEmail(validOptions);
 
     expect(mocks.emailsSend).toHaveBeenCalledOnce();
@@ -178,36 +183,37 @@ describe('sendEmail() — successful delivery', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Resend returns an error object
+// SMTP refuses a recipient
 // ---------------------------------------------------------------------------
 
-describe('sendEmail() — Resend error response', () => {
+describe('sendEmail() — SMTP recipient rejection', () => {
   let restore: () => void;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    restore = setEnv({ RESEND_API_KEY: 're_test_key', EMAIL_FROM: 'noreply@hustlestats.io' });
+    restore = setEnv({ SMTP_PASS: 'fixture-password', EMAIL_FROM: 'noreply@hustlestats.io' });
   });
 
   afterEach(() => {
     restore();
   });
 
-  it('returns failure when Resend returns an error in the response', async () => {
+  it('returns failure when SMTP rejects the recipient', async () => {
     mocks.emailsSend.mockResolvedValue({
-      data: null,
-      error: { message: 'Invalid to address' },
+      accepted: [],
+      rejected: [validOptions.to],
+      messageId: 'fixture-id',
     });
 
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Invalid to address');
+    expect(result.error).toBe('Email delivery failed (rejected)');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Resend throws an exception
+// SMTP throws an exception
 // ---------------------------------------------------------------------------
 
 describe('sendEmail() — thrown exceptions', () => {
@@ -215,29 +221,29 @@ describe('sendEmail() — thrown exceptions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    restore = setEnv({ RESEND_API_KEY: 're_test_key', EMAIL_FROM: 'noreply@hustlestats.io' });
+    restore = setEnv({ SMTP_PASS: 'fixture-password', EMAIL_FROM: 'noreply@hustlestats.io' });
   });
 
   afterEach(() => {
     restore();
   });
 
-  it('returns failure when Resend throws an Error instance', async () => {
+  it('returns failure when SMTP throws an Error instance', async () => {
     mocks.emailsSend.mockRejectedValue(new Error('network failure'));
 
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('network failure');
+    expect(result.error).toBe('Email delivery failed (transport)');
   });
 
-  it('returns "Unknown error" when a non-Error value is thrown', async () => {
+  it('sanitizes a non-Error failure without echoing its content', async () => {
     mocks.emailsSend.mockRejectedValue('some string error');
 
     const result = await sendEmail(validOptions);
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Unknown error');
+    expect(result.error).toBe('Email delivery failed (transport)');
   });
 
   it('does not throw — always resolves', async () => {

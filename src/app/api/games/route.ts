@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { createLogger } from '@/lib/logger'
 import { gameSchema } from '@/lib/validations/game-schema'
 import { sendEmail } from '@/lib/email'
+import { resolveAppOrigin } from '@/lib/app-origin'
 import { emailTemplates } from '@/lib/email-templates'
 import { getPlayerAdmin, getPlayersAdmin } from '@/lib/db/queries/players'
 import { getAllGamesForPlayerAdmin, createGameAdmin, getUnverifiedGamesAdmin } from '@/lib/db/queries/games'
@@ -248,9 +249,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (parentUser?.email) {
-        const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : 'http://localhost:3000';
+        const baseUrl = resolveAppOrigin();
 
         const verifyUrl = `${baseUrl}/verify?playerId=${encodeURIComponent(validatedData.playerId)}`;
 

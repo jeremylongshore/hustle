@@ -14,6 +14,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { users, verificationTokens } from '@/lib/db/schema/auth';
 import { sendEmail } from '@/lib/email';
+import { emailConfiguration } from '@/lib/smtp';
 import { emailTemplates } from '@/lib/email-templates';
 import { createLogger } from '@/lib/logger';
 
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+  if (!emailConfiguration().configured) {
     return NextResponse.json(
       { success: false, error: 'Email service is not configured. Please contact support.' },
       { status: 503 }

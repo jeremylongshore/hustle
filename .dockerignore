@@ -17,7 +17,6 @@ claudes-docs
 # their own toolchains — exclude from the Next.js build context.
 nwsl
 mobile
-
 # Local browser databases, session cookies and traces never enter images.
 03-Tests/e2e/.runtime
 03-Tests/e2e/.auth
