@@ -12,6 +12,9 @@ services:
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET required in .env}
       AUTH_SECRET: ${AUTH_SECRET:-${SESSION_SECRET}}
       AUTH_TRUST_HOST: "true"
+      # Public origin for Auth.js-generated URLs (redirects, callback URLs). Without it Auth.js
+      # derives the container bind address (https://0.0.0.0:8084) from HOSTNAME/PORT.
+      AUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-https://hustlestats.io}}
       DATABASE_PATH: /data/hustle.db
       UPLOADS_DIR: /data/uploads
       SMTP_HOST: ${SMTP_HOST:-}
