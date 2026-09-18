@@ -1,69 +1,69 @@
-# Hustle — App Store and Google Play Pathway (2026-09)
+# Hustle — App Store & Google Play Pathway (2026-09)
 
-**Status:** Current plan. Roadmap: 281 (PWA in P3, native apps in P4) · Money: 282 §4
-**Caveat:** store policies change. **Re-verify every policy line below against the live Apple App Review Guidelines and Google Play policy at submission time.**
+**Status:** Current plan. Roadmap: 281 (PWA in P3, native apps in P6) · Money: 282 §5 · Safety: 285
+**Caveat:** store policies and minor-safety laws are moving fast in 2026. **Re-verify every policy line below against the live Apple App Review Guidelines and Google Play policy at submission time.**
 
 ---
 
-## 1. Decision: PWA now, Expo native app for the stores
+## 1. Decision: PWA first, then an Expo native app
 
 | Option | Verdict | Why |
 |---|---|---|
-| **PWA** (installable Next.js) | ✅ **Ship in P3** | Almost free. It covers Open Gym QR check-in at the door and web push. It is not in the stores |
-| Capacitor/WebView wrapper of the site | ❌ | Apple guideline 4.2 (minimum functionality) rejects repackaged websites. Our Next.js app is server-rendered and does not export statically. It would be a fragile hybrid |
-| Revive `99-Archive/mobile` as-is | ❌ | It is fully bound to Firebase Auth and Firestore, and GCP is torn down |
-| **New Expo (React Native) app on the existing API** | ✅ **P4** | A real native app. It reuses screens, navigation, and styling from the archive (Expo Router, NativeWind, React Query). EAS Build and Submit sign both platforms without a Mac |
+| **PWA** (installable Next.js) | ✅ **Ships in P3** | Near-free. Gives web push, an install prompt, and offline stat entry. It won't appear in the stores |
+| Capacitor/WebView wrapper around the site | ❌ | Apple 4.2 (minimum functionality) rejects repackaged websites, and our Next.js app is server-rendered |
+| Revive `99-Archive/mobile` | ❌ | It is fully bound to Firebase, and GCP has been torn down |
+| **New Expo (React Native) app on the existing API** | ✅ **P6** | A real native app. It reuses screens and navigation from the archive (Expo Router, NativeWind, React Query), and EAS Build/Submit signs both platforms without a Mac |
 
-**Architecture:** one backend. The Expo app calls the same `/api/*` routes as the web app.
+**One backend.** The Expo app calls the same `/api/*` routes. The API needs these additions:
+- A mobile auth endpoint that issues short-lived access tokens plus refresh tokens.
+- Bearer-token support in the route guards.
+- An Expo push-token table.
+- A resumable video upload endpoint (P4).
 
-**Required API work:**
-- a mobile auth endpoint that issues short-lived access tokens plus refresh tokens, with the session model shared with NextAuth
-- bearer-token support in the route guards
-- an Expo push token table
+## 2. Prerequisites (start now; some have long lead times)
 
-## 2. Prerequisites (start now, because they have lead times)
+- [ ] **D-U-N-S number** for Intent Solutions LLC. It is free but takes days to weeks, and both stores require it for an organization account.
+- [ ] **Apple Developer Program**, organization enrollment ($99/yr), plus the **Small Business Program** (15% commission).
+- [ ] **Google Play Console** organization account ($25 once). New *personal* accounts must pass a 12-tester, 14-day closed test first; organization accounts skip that gate.
+- [ ] A RevenueCat account, with Family products created in App Store Connect and the Play Console.
+- [ ] Support URL, privacy policy URL (`/privacy` already exists), and marketing URL.
 
-- [ ] **D-U-N-S number** for Intent Solutions LLC. It is free but takes days to weeks, and both stores need it for an organization account.
-- [ ] **Apple Developer Program**, organization enrollment ($99/yr).
-- [ ] **Google Play Console**, organization account ($25 one-time). Google requires new *personal* accounts to run a closed test with at least 12 testers for 14 days before production. **An organization account avoids that gate.**
-- [ ] Apple **Small Business Program** enrollment, for 15% commission.
-- [ ] Support URL, privacy policy URL (`/privacy` exists), and a marketing URL.
-- [ ] RevenueCat account, with products created in App Store Connect and in the Play Console.
+## 3. Compliance checklist (the usual rejection reasons, plus minors)
 
-## 3. Compliance checklist (the usual rejection causes)
+- [ ] **Account deletion inside the app** (Apple 5.1.1(v)), plus a web deletion URL for Play's Data safety form.
+- [ ] **Age signals:** integrate the **Apple Declared Age Range API** and the **Google Play Age Signals API**, and handle every response state. This is driven by the state App Store Accountability Acts (UT and LA in 2027; TX is currently enjoined). **Verify the current deadlines at build time** (285 §2).
+- [ ] **Audience:** positioned for parents and teens. Don't enrol in Apple's Kids Category or Google's Designed for Families. COPPA still applies to any under-13 data, and teen protections apply (285).
+- [ ] **User-generated content (Apple 1.2):** content filtering and moderation, report, block, and published contact info. **The recruiting reel pipeline must already have these before submission.**
+- [ ] **No private adult-to-minor messaging.** Recruiter contact is routed to the parent (281 P4). Tell the reviewer this in the review notes.
+- [ ] **Privacy label and Data safety declarations:** health and fitness data, photos and videos, contact info, coarse location (optional). No tracking, no ATT prompt, no ad SDKs.
+- [ ] **Billing:** Family is sold through IAP in the app (RevenueCat). A US link-out to web checkout only if the current rules allow it (282 §5).
+- [ ] **Sign in with Apple:** only required if we add third-party social login (4.8). Email/password alone does not trigger it.
+- [ ] **HealthKit / Health Connect:** not in v1. Adding them brings extra review.
+- [ ] **Demo accounts for review:** a parent with an athlete, a verified-recruiter account, and seeded stats and a seeded reel.
+- [ ] **Age rating:** answer the updated questionnaire (Apple's new 13+/16+/18+ bands). UGC video with parent-gated visibility probably lands at 13+. Confirm this.
 
-- [ ] **Account deletion inside the app** (Apple 5.1.1(v)), plus a **web deletion URL** in the Play Data safety form.
-- [ ] **Audience = parents.** Do not list in the Kids category or Google's Designed for Families program. The parent is the account holder, and athletes act within the parent's workspace. **COPPA still applies** to data about children: verifiable parental consent, data minimization, no third-party ad SDKs. Honor the amended COPPA Rule.
-- [ ] **Privacy nutrition label** (Apple) and **Data safety** (Google): declare health and fitness data, location (coarse, used for Open Gym search), and contact info. **No tracking, and no ATT prompt.**
-- [ ] **Digital subscriptions through IAP.** Open Gym bookings through Stripe, because they are physical services (282 §4). The reviewer notes must explain this split.
-- [ ] **Sign in with Apple** is required *only if* we add third-party social login (4.8). Email and password alone does not trigger it.
-- [ ] **Location:** foreground only, with a clear purpose string. **No background location.**
-- [ ] **Health data:** do not integrate HealthKit or Health Connect in v1. That avoids extra review. Add it later.
-- [ ] **A demo account with seeded data** for reviewers, covering a parent with an athlete and a bookable Open Gym session.
-- [ ] Age rating questionnaire: user-generated content is limited, and there is no open chat. The expected rating is 4+ or 9+ on Apple and Everyone on Google, but confirm it.
-
-## 4. Build and release steps
+## 4. Build and release (P6, about 8 weeks)
 
 | Week | Step |
 |---|---|
-| 1 | Expo project (`apps/mobile` or a separate repo; decide in P4 kickoff). Auth token API. EAS project. SOPS-managed EAS secrets |
-| 2–4 | Screens: auth, athletes, Dream Gym logging, game logging |
-| 4–6 | Open Gym: browse (map/list), booking via Stripe PaymentSheet, waiver, QR check-in. Push notifications through Expo |
-| 6 | RevenueCat IAP for Family. Deletion flow. Crash reporting |
-| 6–7 | **TestFlight** internal, then external beta (external beta needs Beta App Review). **Play internal testing**, then closed testing |
-| 7–8 | Store listings: screenshots (6.9" and 6.5" iPhone, and 13" iPad if the app supports iPad; Play phone and 7"/10" tablet), icon, description, keywords. Submit |
-| 8+ | Review. Staged rollout on Play (10% → 50% → 100%) and phased release on iOS |
+| 1 | Expo project scaffold. Token auth API. EAS project with SOPS-managed secrets |
+| 2–4 | Track (games, practice, co-sign), Train (plans, guided sessions, rest timer), Plan (calendar and push) |
+| 4–6 | Get Seen (profile, reel upload with moderation, parent approvals), Compete (badges, challenges) |
+| 6 | RevenueCat IAP, age-signals APIs, deletion flow, crash reporting, offline queue |
+| 6–7 | **TestFlight** internal, then external (needs Beta App Review). **Play** internal testing, then closed testing |
+| 7–8 | Store listings and screenshots (6.9" and 6.5" iPhone, plus iPad if supported; Play phone and tablets). Submit |
+| 8+ | Phased release on iOS. Staged rollout on Play (10% → 50% → 100%) |
 
-**CI:** a GitHub Actions job runs `eas build` and `eas submit` on version tags, and the secrets come from SOPS. This matches the estate standard.
+**CI:** a GitHub Actions workflow runs `eas build` and `eas submit` on version tags, with secrets from SOPS, following the estate standard.
 
-## 5. Store-listing positioning (draft)
+## 5. Listing draft
 
-- **Name:** Hustle — Soccer Training & Stats
-- **Subtitle (iOS, 30 chars):** "Train. Track. Find Open Gym."
-- **Hook:** "Every game, every workout, every open gym — one place, owned by you, not the club."
+- **Name:** Hustle — Soccer Training & Recruiting
+- **Subtitle (iOS, 30 chars max):** "Train. Track. Get Recruited."
+- **Hook:** "Your whole soccer life in one app — workouts, games, calendar, and a verified highlight profile college coaches trust. Parent-controlled. Never sold."
 
-## 6. Post-launch
+## 6. After launch
 
-- Crash-free rate at ≥99.5% before any marketing push.
-- Answer review replies within 48 hours.
-- Ship the app-version force-upgrade endpoint before v1.0, so we can deprecate old API contracts.
+- Keep crash-free sessions at 99.5% or better before any marketing push.
+- Reply to reviews within 48 hours.
+- Build a force-upgrade endpoint before v1.0 so old API contracts can be retired.

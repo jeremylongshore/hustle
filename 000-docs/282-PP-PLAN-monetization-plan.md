@@ -1,95 +1,76 @@
 # Hustle — Monetization Plan (2026-09)
 
-**Status:** Current proposal. Vision: 280 · Roadmap: 281 (P2 and P3) · Stores: 283
-**Note:** all revenue figures are **illustrative arithmetic, not forecasts.** The assumptions are stated inline.
+**Status:** current proposal. Related docs: vision 280 · roadmap 281 (P2) · stores 283 · competition 284 · safety 285.
+**Note:** revenue figures are **illustrative arithmetic, not forecasts.**
 
 ---
 
-## 1. Revenue streams
+## 1. Positioning on price
 
-| # | Stream | Who pays | When |
-|---|---|---|---|
-| 1 | **Family subscription** | Parent | P2 (web), P4 (in-app) |
-| 2 | **Open Gym booking fees** | Parent (booking fee) and host (take rate) | P3 |
-| 3 | **Host Pro** subscription | Host | P3 (late) |
-| 4 | **Club / Team** seats | Club | P5 |
+The market charges families in one of two ways (284):
+- **Predatory:** NCSA at $2k–$6k+, with opaque pricing and sales calls.
+- **Fragmented:** $10–20/mo *per app*, times 4–6 apps.
 
-## 2. Subscription tiers — change from what is in code today
+Hustle's pitch: **one transparent family price that replaces the stack.** There are no sales calls, and recruiting is never used as a guilt lever.
 
-**Today** (`src/lib/stripe/plan-mapping.ts`): Free $0 · Starter $9 · Plus $19 · Pro $39. The tiers are split by athlete count, up to unlimited.
+## 2. Tiers
 
-**The problem:** a family has 1–3 kids. Four tiers split by athlete count read like a SaaS price sheet for clubs, not a parent purchase, and the $39 tier has no family buyer.
+**What's in the code today** (`src/lib/stripe/plan-mapping.ts`): Free $0 · Starter $9 · Plus $19 · Pro $39, split by athlete count. That's the wrong shape for families.
 
 **Proposed:**
 
 | Tier | Price | Includes |
 |---|---|---|
-| **Free** | $0 | 1 athlete · game logging and basic stats · Dream Gym logging · Open Gym booking (booking fee applies) |
-| **Family** | **$7.99/mo or $59.99/yr** (about 37% off) | Up to 4 athletes · full Dream Gym (plans, progress, assessments) · AI coach · parent and coach co-signed stats · season report export · **no Open Gym booking fee** |
-| **Club** (P5) | Per-roster pricing, TBD | Coach dashboards, roster seats, team schedule |
+| **Free** | $0 | • 1 athlete<br>• Game and practice logging<br>• Co-signed stats<br>• Calendar<br>• Basic Dream Gym logging<br>• **Basic recruiting profile:** verified stats plus one reel link |
+| **Family** | **$9.99/mo or $79.99/yr** | • Up to 4 athletes<br>• **AI gym and training plans** (adaptive, with progression and the muscle map)<br>• Full recruiting hub: unlimited clips, direct upload, "recruiter viewed" alerts, reel guidance<br>• Challenges and badges<br>• Season report export<br>• Calendar sync |
+| **Club** (P5+) | ~$299–$499 per team per year | • Coach dashboards<br>• Roster co-sign<br>• Team challenges<br>• Positioned below Hudl Bronze ($400/yr), which is video-only |
 
-- Offer a **14-day Family trial** at signup, with no card required on the web.
-- Use the annual plan as the default presentation, because annual cuts churn in a seasonal sport.
-- AI coach calls are gated to Family and capped per athlete per day. That keeps the Claude cost bounded (see §5).
+- **Benchmarks** (284): single-purpose youth apps cost $5–$20/mo. The researched sweet spot for a family all-in-one is $9.99–$14.99. Starting at **$9.99** undercuts a multi-app stack by 2–3×. $79.99/yr is 33% off monthly.
+- **Trial:** 14-day Family trial. On the web, no card is needed.
+- **Keep recruiting basics free:** a kid shouldn't need a paid plan to be seen. This is the honest wedge against NCSA.
+- **AI cost control:** AI plans are Family-only, with per-athlete daily caps. Use a small model for tips and a larger one for weekly plans.
 
-## 3. Open Gym economics
+## 3. College recruiters: free, on purpose
 
-- **Hosts set the price.** Drop-in youth sessions typically run $10–$25.
-- **The platform take rate is 10%** of the session price, deducted from the host payout.
-- **The parent pays a booking fee of $1.00** per booking. Family subscribers do not pay it, which is the upsell.
-- **Payments go through Stripe Connect Express.** Hosts do their own KYC, and Stripe handles payouts and 1099-K reporting.
+- **Adoption:** recruiters don't log into paywalled databases (284). A free, useful portal is what brings them.
+- **NCAA rules:** when an institution *pays* for information about prospects, "recruiting/scouting service" rules come into play. Those rules can require approval from the NCAA Enforcement Certification and Approvals Group (ECAG), the NCAA unit that approves scouting services. Keeping recruiter access free avoids that until counsel confirms the position (285).
+- **Later, only after a legal read:** recruiter-side premium features such as CRM export, board tools, or bulk film.
 
-**Worked example** (a $15 session booked by a Free parent):
+## 4. Other revenue (later, optional)
 
-| | |
+- **Club partnerships** (the SportsRecruits pattern): bundle Family at a discount through clubs and leagues. This is a distribution play as much as a revenue one.
+- **Integrations, not hardware:** affiliate or partner deals with Trace, Veo, or PlayerMaker, but only if they're transparent to families.
+- **Never:** selling data, ads aimed at minors, or paid recruiting advisors.
+
+## 5. Where payments happen (the app-store rules)
+
+Everything Hustle sells is **digital**, so inside the iOS and Android apps it goes through store billing: Apple IAP and Google Play Billing.
+
+| Channel | Billing | Hustle keeps (approx.) |
+|---|---|---|
+| Web (primary) | Stripe | ~96–97% (2.9% + 30¢) |
+| iOS / Android in-app | IAP via **RevenueCat**, which syncs the same `workspace.plan` | 85%, via the Apple Small Business Program and Google's 15% rate for subscriptions |
+| US in-app link-out to web checkout | Stripe | Allowed after the 2025 Epic rulings. **Re-verify both stores' current rules at submission** |
+
+## 6. Unit economics (per paying family per month, rough)
+
+| Item | Estimate |
 |---|---|
-| Parent pays | $16.00 |
-| Stripe processing (~2.9% + 30¢) | −$0.76 |
-| Host receives (90% of $15) | $13.50 |
-| **Hustle net** | **~$1.74** |
+| Revenue (annual plan) | ~$6.67 |
+| Stripe | ~$0.20 |
+| Claude (plans + tips, capped) | $0.10–$0.50 |
+| Video storage and transcode (Family with uploads) | $0.10–$0.40. Keep reels short, and link-ins cost nothing |
+| Moderation (per video minute) | Low cents. Budget it once Hive pricing is known |
+| Hosting | ~$0 marginal (the VPS is already paid for) |
 
-**Host Pro at $29/mo:** the take rate drops to 5%, and the host gets recurring sessions, waitlists, roster exports, and attendance analytics. At $15 a session, Pro saves the host $0.75 per booking, so it pays for itself at about 40 bookings a month.
+Gross margin on web Family is **roughly 85–90%**.
 
-**Launch incentive:** Hustle charges hosts no take rate for their first 90 days. We subsidize supply because supply is the bottleneck.
-
-## 4. The app-store question (the part that decides the architecture)
-
-| What is sold | iOS / Android in-app | Why |
-|---|---|---|
-| Family subscription (digital) | **Must offer store billing** (Apple IAP / Google Play Billing) when sold inside the app | Digital content and features consumed in the app |
-| Open Gym booking (real-world service) | **Stripe is allowed** | Physical services consumed outside the app are exempt from IAP (Apple guideline 3.1.3(e) and 3.1.5; Google Play payments policy exemption for physical services) |
-
-**Strategy:**
-1. **The web is the primary checkout.** Stripe on the web keeps close to 100% of revenue after processing.
-2. In the native apps, offer Family through **IAP via RevenueCat**. A RevenueCat webhook updates the same `workspace.plan`, so one entitlement works everywhere.
-3. Enroll in the **Apple Small Business Program** and use Google's 15% subscription rate: **15% commission** while revenue is under $1M.
-4. **US link-out:** after the 2025 *Epic v. Apple* injunction and the *Epic v. Google* remedies, US apps may link out to web checkout. **Verify the current rules for both stores at submission time**, because this area is still moving. If they allow it, show a "subscribe on the web" link for US users alongside IAP.
-
-## 5. Cost side (per paying family, monthly, rough)
-
-| Cost | Estimate | Note |
-|---|---|---|
-| Hosting | ~$0 marginal | The VPS is already paid for, and SQLite is fine at this scale |
-| Claude (AI coach) | $0.10–$0.50 | Caps per athlete per day. Use a small or fast model for tips and a larger one for plans |
-| Email (MXroute SMTP) | ~$0 | Flat plan |
-| Stripe | 2.9% + 30¢ | On $7.99 that is about $0.53. Annual billing cuts it to about $0.17/mo |
-| Store commission | 15% | IAP purchases only |
-
-Gross margin on a web Family subscription is **above 85%**.
-
-## 6. Illustrative targets (assumptions, not a forecast)
-
-- 1,000 paying Family subscriptions at about $60/yr (a mix of annual and monthly) is about **$60k ARR**.
-- 10 hosts × 40 bookings/mo × ~$1.75 net is about **$700/mo** in Open Gym revenue in the launch metro.
-
-Open Gym's bigger value is **acquisition**: every booking brings a parent into the Family funnel.
-
-**Direction to model:** Open Gym revenue grows with metros. The subscription grows with how well Open Gym and Dream Gym retain users.
+**Illustrative:** 1,000 families at ~$80/yr is ~$80k ARR. 5,000 families is ~$400k ARR.
 
 ## 7. Must be true before charging (P2 gate)
 
-- [ ] Stripe live keys and price IDs in `.env.sops`, and `BILLING_ENABLED=true`.
-- [ ] Plan-limit sources reconciled into one (281 P0).
-- [ ] Stripe Tax on. A CPA confirms the sales-tax position on subscriptions and on platform fees for marketplace services.
-- [ ] ToS, refund and cancellation policy, and privacy policy updated for minors' data (COPPA, parental consent). These have legal review.
-- [ ] Dunning emails (failed payment, trial ending) sent over SMTP and tested.
+- [ ] Stripe live keys and price IDs in `.env.sops`, and `BILLING_ENABLED=true`
+- [ ] A single plan-limit source of truth (281 P0)
+- [ ] Stripe Tax on, and a CPA review of sales tax on digital subscriptions
+- [ ] ToS, refund/cancellation policy, and privacy policy reviewed by counsel (minors: 285)
+- [ ] Dunning and trial-ending emails sent over SMTP, and tested

@@ -6,10 +6,12 @@
 
 | # | Doc | What it is |
 |---|---|---|
-| 280 | [Reboot vision](280-PP-PROD-hustle-reboot-vision.md) | Product north star: who it's for, the four pillars, Open Gym, and what we are not doing |
-| 281 | [Finish roadmap](281-PP-RMAP-finish-roadmap.md) | Phases P0–P5, each with an exit gate |
-| 282 | [Monetization plan](282-PP-PLAN-monetization-plan.md) | Tiers, Open Gym economics, the app-store billing split |
+| 280 | [Reboot vision](280-PP-PROD-hustle-reboot-vision.md) | North star: one-stop shop for the youth soccer athlete, the pillars, the openGym blueprint |
+| 281 | [Finish roadmap](281-PP-RMAP-finish-roadmap.md) | Phases P0–P6, each with an exit gate |
+| 282 | [Monetization plan](282-PP-PLAN-monetization-plan.md) | Free/Family tiers, free recruiter portal, app-store billing |
 | 283 | [App Store / Play pathway](283-PP-PLAN-app-store-pathway.md) | PWA, then Expo; prerequisites, compliance, release steps |
+| 284 | [Competitive landscape](284-RA-ANLY-competitive-landscape.md) | Recruiting, training, and stats competitors; openGym; where we win |
+| 285 | [Minor safety & compliance](285-BL-CMPL-minor-safety-compliance.md) | COPPA, state laws, stores, video/CSAM, messaging, NCAA; for counsel review |
 | 276 | [Key rotation inventory](276-TQ-SECU-key-rotation-inventory.md) | Masked secret inventory from the 2026-07 scrub |
 | 277 | [Resend secret exposure](277-OD-INCD-resend-secret-exposure.md) | Incident RCA (2026-09) |
 | 278 | [SMTP email operations](278-OD-OPNS-smtp-email-operations.md) | Live runbook for MXroute SMTP and the email health probe |

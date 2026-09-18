@@ -1,90 +1,113 @@
 # Hustle — Finish Roadmap (2026-09 reboot)
 
-**Status:** Current plan. Vision: 280 · Money: 282 · Stores: 283
-**Tracking:** one beads epic per phase. Each deliverable is a bead, and each phase gets a GitHub issue. The standard mirror setup in `bd-sync` applies.
+**Status:** Current plan.
+**Related docs:** vision 280 · money 282 · stores 283 · competition 284 · safety 285.
+**Tracking:** one beads epic per phase, one GitHub issue per phase, mirrored with `bd-sync`.
 
-The estimates assume one builder working with Claude. They are ranges, not promises. **Each phase has an exit gate, and we do not start the next phase until the gate is met.**
+The estimates assume one builder working with Claude. They are ranges, not promises. **Each phase has an exit gate, and we don't start the next phase until the gate is met.**
 
 ```
-P0 Reset ──▶ P1 Core polish ──▶ P2 Web monetization ──▶ P3 Open Gym MVP ──▶ P4 Mobile ──▶ P5 Growth
- 1–2 wk        2–3 wk              ~2 wk                  4–6 wk              6–8 wk       ongoing
-                                                              └─ PWA ships inside P3 (check-in needs a phone)
+P0 Reset ─▶ P1 Safety foundation + Track ─▶ P2 Web money ─▶ P3 Train + Plan + PWA ─▶ P4 Get Seen ─▶ P5 Compete ─▶ P6 Native apps
+ 1–2 wk       3–4 wk                          ~2 wk          4–6 wk                   6–8 wk          3–4 wk        6–8 wk
 ```
+
+Why this order:
+- **Safety comes before any public or social feature.** Money comes before expensive features.
+- **Train** builds on code we already have.
+- **Get Seen** carries the heaviest compliance load (video moderation, recruiter verification, the NCAA question), so it goes after the foundation is solid.
+- **Native apps** wrap a finished product.
 
 ---
 
 ## P0 — Reset the repo (1–2 weeks)
 
-Goal: a repo a stranger could clone and trust.
+- [ ] Extract `nwsl/` (389 files, an unrelated video pipeline) into its own repo, or delete it.
+- [ ] Delete `tmp/`, `tools/adk_docs_crawler`, `functions/`, and `docs/`, plus the machine-local `google-adk-reference` symlink and the stray untracked `mobile/` directory.
+- [ ] Delete the orphaned `src/app/games/` routes and the dead `src/lib/prisma.ts` stub. Rename `src/types/firestore.ts` to domain types.
+- [ ] Reconcile the two plan-limit sources: `billing/plan-limits.ts` and `stripe/plan-mapping.ts`.
+- [ ] Fix the Release workflow. It fails on every push because there is no `v*` tag.
+- [ ] `npm audit`: resolve or waive the 4 critical and 13 high findings, with written reasons.
+- [ ] Confirm `/data/hustle.db` is in the VPS borg backup, and **prove a restore**.
+- [ ] Move rate limiting from the in-memory `Map` to SQLite.
 
-- [ ] Extract `nwsl/` (389 files, unrelated video pipeline) to its own repo, or delete it.
-- [ ] Delete the dead trees: `tmp/`, `tools/adk_docs_crawler`, `functions/`, `docs/` (a stray `index.html`), and the machine-local `google-adk-reference` symlink.
-- [ ] Delete the orphaned `src/app/games/` routes, which duplicate `dashboard/games` outside the workspace guard. Also delete the dead `src/lib/prisma.ts` stub.
-- [ ] Rename `src/types/firestore.ts` to domain types, touching about 90 importers. This is naming debt only.
-- [ ] **Reconcile plan limits.** `src/lib/billing/plan-limits.ts` (UI, informational) and `src/lib/stripe/plan-mapping.ts` (enforced) must become one source.
-- [ ] Fix the **Release workflow**. It fails on every main push because there is no `v*` tag, so `v0.0.0..HEAD` is an unknown revision. Seed a `v1.0.0` tag or guard the step.
-- [ ] Work down `npm audit`: 32 findings, including 4 critical and 13 high.
-- [ ] Confirm that the SQLite volume (`/data/hustle.db`) is in the VPS borg backup, and **prove a restore**.
-- [ ] Move rate limiting from an in-memory `Map` to a SQLite-backed limiter. That is fine while we run a single node.
-- [ ] Remove the stray untracked `mobile/` directory, which holds an Expo cache and a dead Firebase key.
+**Exit gate:** CI and Release are green, audit highs are cleared, a restore has been proven, and the tree contains only shipping code.
 
-**Exit gate:** CI and Release are green, audit criticals and highs are resolved or waived with written reasons, a restore has been tested, and the tree contains only code that ships.
+## P1 — Safety foundation and Track (3–4 weeks)
 
-## P1 — Core polish (2–3 weeks)
+Items come from the 285 MUST list.
+- [ ] **Age gate and parental consent flow:**
+  - The parent creates the account.
+  - Athlete sub-accounts require parent consent.
+  - Under-13 users are handled under the amended COPPA Rule, with a separate consent for sending data to AI.
+- [ ] **Parent controls:** visibility settings, contact approval, an activity summary, and an audit log.
+- [ ] **Account deletion and data export** (CSV/PDF season report), available in the UI.
+- [ ] **Co-signed stats:** replace `games.verified: boolean` with signer, role, and timestamp. Coaches are invited by link. Show "Verified by Coach X".
+- [ ] Practice logging polish, and a mobile-responsive pass on every dashboard page.
+- [ ] Privacy policy and ToS rewritten, with **counsel review booked**.
 
-- [ ] **Parent and coach co-sign.** Replace the boolean `games.verified` with signer, role, and timestamp. Coaches get invited by link, not by account sprawl.
-- [ ] Onboarding: signup, then the first athlete, then the first log, in under 2 minutes. Measure it.
-- [ ] Mobile-responsive pass on every dashboard page, since this is the future PWA.
-- [ ] Data export (CSV/PDF season report) and **account deletion** from the UI. Stores require deletion (283), and parents deserve export.
-- [ ] Refresh the empty states, the landing page, and the pricing page to match 282.
-
-**Exit gate:** 5 real families have used it for 2 weeks, and nothing is on fire.
+**Exit gate:** 5 real families have used it for 2 weeks, and counsel has reviewed the consent flow.
 
 ## P2 — Web monetization (~2 weeks)
 
-- [ ] Collapse the tiers to **Free / Family** (Club comes later), per 282. Update `plan-mapping.ts`, the landing page, and the paywall copy.
-- [ ] Create the Stripe live products and prices, store the keys in `.env.sops`, and flip `BILLING_ENABLED=true`.
-- [ ] Turn on Stripe Tax. Publish the refund and cancellation policy. Update the ToS and privacy policy (COPPA language, parent consent).
-- [ ] Run the billing E2E against Stripe test clocks: trial, then conversion, then failed payment, then dunning, then cancellation.
+- [ ] Tiers become **Free / Family** (282). Update `plan-mapping.ts`, the pricing page, and the paywall.
+- [ ] Stripe live keys in `.env.sops`, `BILLING_ENABLED=true`, Stripe Tax on, published refund policy.
+- [ ] Billing E2E on Stripe test clocks: trial → convert → failed payment → dunning → cancel.
 
-**Exit gate:** the first real paid subscription, with a webhook replay audit showing it clean.
+**Exit gate:** the first real paid subscription, with a clean replay audit.
 
-## P3 — Open Gym MVP (4–6 weeks)
+## P3 — Train and Plan, plus the PWA (4–6 weeks)
 
-- [ ] Schema: `host`, `venue`, `session`, `booking`, `check_in`, `waiver`, plus the Drizzle migrations.
-- [ ] Host onboarding through **Stripe Connect Express**, plus a manual approval queue (an admin page).
-- [ ] Host tools: create one-off or recurring sessions, capacity, waitlist, a roster for each session, cancel and refund.
-- [ ] Parent flow: browse by distance, date, and age, then book, pay, and sign the waiver, then get the confirmation email over SMTP.
-- [ ] Athlete-side "request to join," which the parent approves.
-- [ ] QR check-in. The host scans the athlete's code, and that writes a Dream Gym log automatically.
-- [ ] **PWA:** manifest, service worker, install prompt, and web push for reminders. This covers door check-in before native apps exist.
-- [ ] Payouts, fee reporting, and a dispute runbook.
-- [ ] Recruit 5–10 hosts by hand in the launch metro before public launch.
+- [ ] **AI gym plans (the openGym blueprint, our own code):**
+  - onboarding questions → a week of routines
+  - progression rules (linear, double progression, timed holds)
+  - estimated 1RM and PR detection
+  - a muscle map covering balance, fatigue, and detraining
+  - an **AI coach that proposes changes with evidence**, which the user approves or undoes
+  - soccer-specific templates (in-season vs. off-season, position) and age-appropriate load caps
+- [ ] Exercise library: MIT-licensed ExerciseDB text plus our own or licensed media. **No disputed animations.**
+- [ ] **Calendar:** one view across games, practices, workouts, and events. ICS feed and Google/Apple sync. Game-day awareness (taper, fuel, reminders).
+- [ ] **PWA:** manifest, service worker, install prompt, web push, and an **offline stat-entry queue** for tournaments with bad connectivity.
 
-**Exit gate:** 50 paid bookings and a repeat-booking rate of at least 25%.
+**Exit gate:** 60% of active athletes follow a generated plan for 3 or more weeks.
 
-## P4 — Native apps (6–8 weeks)
+## P4 — Get Seen: the recruiting and highlight hub (6–8 weeks)
 
-Details are in 283.
-- [ ] A new Expo app, built fresh and borrowing screens from `99-Archive/mobile`, pointed at the existing API with bearer-token auth.
-- [ ] Scope: Dream Gym logging, game logging, the Open Gym browse, book, and check-in flow, push notifications, and account deletion.
-- [ ] RevenueCat for Family IAP, mapped to the same workspace plan through a webhook.
-- [ ] TestFlight and Play closed testing, then store review, then a staged rollout.
+- [ ] **Recruiting profile:**
+  - co-signed stats, position, grad year, academics (optional), and the reel
+  - link-ins from Hudl, Trace, Veo, and YouTube, plus direct upload
+- [ ] **Video pipeline:** upload → transcode → **moderation** (Hive or similar) → **CSAM hash-matching and the NCMEC reporting runbook** → publish. Report and block tools. Encrypted storage.
+- [ ] **Visibility:** parent-approved. Choose private, verified recruiters only, or a public link. No address, school location, or contact info in public view.
+- [ ] **Verified recruiter accounts:** check the .edu domain against the program's staff directory, with manual review. Free.
+- [ ] **Contact:** recruiters message the **parent's inbox**, and the athlete sees messages only after parent approval. There is never private adult-to-minor messaging.
+- [ ] Honest engagement signals: "Coach X (University) viewed your film", with no inflated counts.
+- [ ] Reel guidance by position, and an AI highlight trim assist later.
+- [ ] **Decision gate: get a legal read on the NCAA "recruiting/scouting service" rules** before any recruiter-side paid feature (285).
 
-**Exit gate:** live in both stores and crash-free at ≥99.5%.
+**Exit gate:** 25 verified recruiters, and 100 profiles published with parent approval.
 
-## P5 — Growth (ongoing)
+## P5 — Compete (3–4 weeks)
 
-Club and team accounts with roster seats · a second metro for Open Gym · host marketing tools · an exportable season or recruiting profile · deeper AI features (a workout plan built from logged data). Social and recruiting feeds stay out unless 280 §6 is revisited.
+- [ ] Personal bests, streaks, and **effort badges**, which reward consistency and improvement rather than raw talent.
+- [ ] Invite-only team or group challenges, which a coach or parent approves.
+- [ ] Age-banded leaderboards, **opt-in, within invited groups only**, with the formula visible.
+- [ ] A parent toggle to hide boards. Overtraining nudges (too many sessions in a week).
+
+**Exit gate:** challenge participants retain at 30 days better than non-participants.
+
+## P6 — Native apps (6–8 weeks)
+
+283 has the details. It is a new Expo app on the same API, with RevenueCat for in-app purchases, the age-signals APIs, the UGC moderation carried over, and a staged rollout.
+
+**Exit gate:** live in both stores with ≥99.5% crash-free sessions.
 
 ---
 
-## Risks that could sink this
+## Risks
 
 | Risk | Mitigation |
 |---|---|
-| Open Gym cold start (no hosts means no parents) | One metro, hosts recruited by hand, Hustle waives fees for the first 90 days |
-| Child-safety incident at a host | Parent-only booking, verified hosts, waivers, no direct messaging, a written incident runbook |
-| App-store rejection | No thin web wrapper. A real native app, a demo account, deletion in-app (283) |
-| Solo-builder bandwidth | Phase gates. Nothing starts until the previous gate is met |
-| SQLite single node | Fine to thousands of users. Tested restore in P0, with a Postgres migration path documented if needed |
+| A child-safety incident (contact or video) | P1 foundation first, parent-routed contact, moderation plus the NCMEC runbook, and an incident runbook |
+| An empty recruiter side | Free access for verified recruiters, plus outreach to college programs in 1–2 regions. Profiles are useful to families even without recruiter logins, because they can share the link themselves |
+| NCAA rules on scouting services | Legal read before monetizing the recruiter side. The default is free |
+| Too big for one builder | Phase gates. P5 can slip without hurting the core |
+| SQLite on a single node | Fine up to thousands of users. P0 proves the restore. Video lives in object storage, not the database |

@@ -1,86 +1,102 @@
 # Hustle — Reboot Vision (2026-09)
 
-**Status:** Current. This document is the product north star.
-**Supersedes:** everything in `262-MS-archive/` (the PRDs, roadmaps, and go-live plans written before the reboot).
-**Companion docs:** 281 (roadmap) · 282 (monetization) · 283 (App Store / Play pathway)
+**Status:** Current. This is the product north star.
+**Supersedes:** everything in `262-MS-archive/`.
+**Companion docs:**
+- 281 roadmap
+- 282 monetization
+- 283 App Store / Play pathway
+- 284 competitive landscape
+- 285 minor-safety compliance
 
 ---
 
 ## 1. One line
 
-**Hustle is where a youth soccer player's training, games, and open gym time live — owned by the parent, built for the athlete.**
+**Hustle is the one-stop shop for the youth soccer athlete.** It covers:
+- training, practice, games and stats
+- AI gym plans
+- the calendar
+- a safe place to compete
+- a highlight hub that college recruiters actually use
 
-## 2. Who it is for
+The parent owns the account. The athlete owns their progress. There is **no predatory upsell**.
 
-| Role | What they want | Relationship to Hustle |
-|---|---|---|
-| **Parent / guardian** | Proof of progress, one place for the schedule, a safe way to find extra training | **Account owner and payer.** Owns the child's data. |
-| **Athlete (13–18)** | Log workouts and games fast, see themselves improve | Primary daily user and the data subject. Acts inside the parent's workspace. |
-| **Host** (gym, trainer, club, facility) | Fill open gym sessions, get paid, less admin | New role, introduced by Open Gym. Supplies sessions. |
-| **Coach** | Verify stats, see who is putting in the work | Later. Co-signs games and gets roster views. |
+## 2. Why this wins (from 284)
 
-## 3. Where we actually are (verified 2026-09-18)
+Families juggle 4–6 apps today, and **no competitor covers the whole list**:
 
-The web app is live at hustlestats.io. It runs self-hosted on the VPS: Next.js, NextAuth v5, Drizzle on SQLite, and Claude for the AI features. Health is green, and SMTP mail is restored as of PR #50.
-
-**Working today:** auth (register, verify, reset, PIN), athletes, game logging and stats, and the full Dream Gym (workouts, cardio, mental and breathing, Fuel Station meals, biometrics, assessments, schedule, progress). The AI recommendations work too. So does Stripe billing, with checkout, portal, webhooks, and plan enforcement, but it is **switched off** (`BILLING_ENABLED=false`).
-
-**Not there:**
-- no mobile app (the Firebase-bound Expo app is archived in `99-Archive/mobile`)
-- no open gym
-- verification is a single self-PIN rather than a parent-plus-coach co-sign
-- the repo carries dead weight from abandoned side projects: `nwsl/`, the ADK crawler, `tmp/`, `functions/`
-
-## 4. The four pillars
-
-1. **Track.** Games and stats that someone other than the athlete can vouch for, via a parent or coach co-sign.
-2. **Train.** Dream Gym is the daily habit loop. It is already built, so it needs polish rather than new scope.
-3. **Open Gym.** Find, book, and check into drop-in sessions near you. Attendance flows straight into the athlete's training log. This is the new growth and revenue engine (§5).
-4. **Pocket.** Native iOS and Android apps, preceded by an installable PWA. Parents live on their phones, and check-in at the door needs a phone.
-
-## 5. Open Gym — drop-in sessions
-
-### The idea
-Hosts post drop-in sessions: futsal open gym, speed and agility, finishing clinics, goalkeeper nights. Each session has a time, place, capacity, age band, skill level, and price. Parents discover sessions nearby, book and pay, and sign the waiver once. The athlete checks in at the door with a QR code. That attendance shows up automatically in Dream Gym as a logged session, with duration and type.
-
-### Why it matters
-- **Retention loop.** Booking leads to attendance, which is logged automatically, which shows as progress, which drives the next booking. Logging stops being a chore.
-- **Growth loop.** Every host brings its own parents. Hosts share their session links, and each link is a Hustle signup.
-- **Money that is not subject to app-store commission.** Booking a real-world session counts as a physical service, so it can go through Stripe even inside the iOS and Android apps. See 282 and 283.
-
-### Core objects
-`host` (a business or individual, onboarded to Stripe Connect) → `venue` (address, geo) → `session` (a time slot with capacity, price, age band, level, and an optional recurrence) → `booking` (parent, athlete, payment, status) → `check_in` (QR scan with a timestamp, which writes a Dream Gym log).
-
-### Trust and safety (non-negotiable because the users are minors)
-- Only a **parent** can book or pay. Athletes can browse and request a session, and the parent approves it.
-- Waivers are signed digitally by the parent, per host, and stored with the booking.
-- Hosts are verified: Stripe Connect KYC, plus a stated proof of liability insurance, plus manual approval while supply is small.
-- No direct host-to-athlete messaging. Messages go to the parent.
-- A session's exact address is visible only after booking. Browsing shows the neighborhood and distance.
-
-### Launch shape
-Launch in **one metro** with 5–10 hosts recruited by hand. Supply comes first, because a marketplace with no sessions is dead on arrival. Expand only after bookings repeat.
-
-## 6. What we are deliberately **not** doing
-
-- **Social feed or the "TikTok of youth soccer" recruiting feed.** It carries high moderation and child-safety cost. Revisit after product-market fit.
-- **Multi-sport.** We stay soccer-first. The Open Gym data model stays sport-agnostic, so this remains an option later.
-- **Agent platforms** (Vertex/ADK "Scout agent," A2A). These are abandoned. AI stays as focused Claude features inside the product.
-- **The NWSL video pipeline.** It gets extracted from this repo.
-
-## 7. How we will know it is working
-
-| Metric | Target by end of first Open Gym metro season |
+| Area | Tools families use now |
 |---|---|
-| Weekly active athletes (log ≥1 thing/week) | 40% of activated athletes |
+| Training | Techne, Beast Mode |
+| Gym | Fitbod, Volt |
+| Calendar | TeamSnap |
+| Game video | Trace, Veo, Hudl |
+| Recruiting | NCSA, SportsRecruits, FieldLevel |
+
+The closest competitors each miss 2–3 of those pillars. The recruiting market runs on distrust: NCSA charges $2k–$6k+ behind sales calls, and Hudl moved youth teams to a $400/yr minimum. Most platforms take stats on the athlete's word, give parents no real control, and leave kids exposed on public profiles. **Our moat is trust.** That means verified stats, parent control, transparent pricing, and a safe design.
+
+## 3. Who it is for
+
+| Role | Wants | In Hustle |
+|---|---|---|
+| **Athlete (13–18)** | Train smarter, see progress, compete, get seen by colleges | Daily user; acts inside the parent's workspace |
+| **Parent / guardian** | One place for everything, safety, a real shot at college | Account owner and payer. Approves visibility and contact |
+| **Club / HS coach** | Verify stats, see who's putting in work | Co-signs games (free, invited by link) |
+| **College recruiter** | Verified stats plus a short reel, filtered by position and grad year | **Free** verified-recruiter portal (see 282 §3 for why free) |
+
+## 4. The pillars
+
+| Pillar | What it is | State today |
+|---|---|---|
+| **Track** | Games, practices, and stats, **co-signed by a parent or coach** ("Verified by Coach X") | Game and practice logging work. Co-sign is a boolean, so it needs the real model |
+| **Train** | AI gym and training plans that adapt to logged work, soccer-specific, age-appropriate. Built on the openGym blueprint (below) | Dream Gym logging works, and Claude gives recommendations. It still needs adaptive plans, progression, and a muscle map |
+| **Plan** | One calendar for games, practices, workouts, and recruiting events; syncs to Apple/Google Calendar; game-day aware (taper, fuel) | The schedule exists but has no sync |
+| **Compete** | Safe competition: personal bests, streaks, effort badges, **invite-only** team challenges, age-banded boards. No public national rankings | Not built |
+| **Get Seen** | Recruiting profile with verified stats and a 2–3 minute highlight reel, links to Hudl, Trace, Veo, or YouTube, parent-approved visibility, and honest "Coach X viewed your film" alerts | Not built |
+| **Safety (the foundation)** | Parent controls, consent, no private adult-to-minor messaging, moderation, data never sold | Partial. 285 is the checklist |
+
+## 5. openGym — what we take and what we don't
+
+The "Open Gym" project is `DuarteSantos8/openGym`: about 1k stars, AGPL-3.0, active September 2026.
+- It **collects no money**: no subscription, no ads, no payment code.
+- It is a single-user, self-hosted gym tracker that stores data as JSON files.
+
+What we do with it:
+- **Don't embed its code.** The AGPL license would force us to open-source Hustle.
+- **Don't run it as our backend.** It isn't multi-tenant.
+- **Don't ship its exercise animations.** Their ownership is disputed, according to its own README.
+- **Do rebuild its best ideas in Hustle's own code:**
+  - progression rules: linear, or double progression through a rep range
+  - a muscle map showing balance, fatigue, and detraining
+  - estimated 1RM and PR detection
+  - guided sessions with rest timers
+  - an **AI coach that proposes plan changes with evidence, which the user approves or undoes**
+- **Exercise content:** the MIT-licensed text from ExerciseDB v1 is usable. Media must be our own or properly licensed, and ideally soccer-specific.
+
+## 6. Out of scope (for now)
+
+- Public social feed, DMs between athletes, or national public leaderboards (safety cost).
+- Multi-sport. We stay soccer-first, with a data model that can generalize.
+- Our own camera or sensor hardware. We **integrate** with Trace, Veo, Hudl, and PlayerMaker exports instead.
+- Paid recruiting "advisors" or consulting. That is the NCSA model we are positioned against.
+- The NWSL video pipeline, ADK agents, and Vertex (extracted or abandoned).
+
+## 7. Success metrics (first 12 months after P2)
+
+| Metric | Target |
+|---|---|
+| Weekly active athletes (≥1 log per week) | 40% of activated athletes |
 | Free → Family conversion | ≥5% |
-| Open Gym repeat-booking rate (parent books again within 30 days) | ≥35% |
-| Active hosts with ≥4 sessions/month | 10 |
-| Crash-free sessions (mobile) | ≥99.5% |
+| Games with a coach or parent co-sign | ≥50% |
+| Recruiting profiles with a reel and verified stats | ≥30% of athletes in grades 10–12 |
+| Verified college recruiters active per month | 100, growing |
+| Safety incidents escalated | 0 unhandled; 100% triaged within 24 hours |
 
 ## 8. Principles
 
-- **The parent owns the data.** That means export and delete at any time, in-app and on the web.
-- **Web first, stores second.** Every feature ships on the web and the PWA before it is native.
-- **One source of truth.** The API serves both web and mobile, with no second backend.
-- **Honest docs.** When the code changes, the doc changes in the same PR, or the doc goes to the archive.
+- **The parent owns the data:** export and delete anytime, and **we never sell it**.
+- **Verified beats volume.** One co-signed stat is worth more than ten self-reported ones.
+- **Compete against yourself first.** Rankings are opt-in, age-banded, and within invited groups.
+- **Web first, stores second.** There is one API behind web and mobile.
+- **Honest docs:** the code and the doc change in the same PR.
