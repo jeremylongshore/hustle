@@ -1,7 +1,7 @@
 # Hustle: Operator-Grade System Analysis
 
 *Generated: 2026-09-18*
-*Version: `main` @ `ed4be827` (the merge of #51). The open PRs #59–#62 are covered in §11.*
+*Version: `main` after PRs #59–#62 merged and deployed (release **v2.2.0**, 2026-09-18). PR #63 (`AUTH_URL`) was in CI at the time of writing.*
 *Audience: Ravi (new collaborator) and anyone else joining the build.*
 *Companion docs: 280 vision · 281 roadmap · 282 monetization · 283 app-store pathway · 284 competitive landscape · 285 minor-safety compliance*
 
@@ -80,10 +80,10 @@ The implementation is **mature on the web for a single-user logging tool**. It i
 
 | Category | Technology | Version (main) | Purpose |
 |---|---|---|---|
-| Framework | Next.js (App Router, standalone output) | 16.2.1 (→ 16.3.5 in PR #61) | UI and API in one process |
+| Framework | Next.js (App Router, standalone output) | 16.3.5 (upgraded from 16.2.1 in #61) | UI and API in one process |
 | UI | React | 19.2.4 | Components |
 | Styling | Tailwind CSS | 4.x | Utility CSS |
-| Auth | Auth.js / `next-auth` | 5.0.0-beta.31 (→ beta.32 in #61) | Credentials sign-in, JWT sessions |
+| Auth | Auth.js / `next-auth` | 5.0.0-beta.32 (from beta.31 in #61) | Credentials sign-in, JWT sessions |
 | ORM | Drizzle ORM | ^0.45.2 | Typed SQL, schema, migrations |
 | Database | SQLite via `better-sqlite3` | ^12.10.0 | Single-file DB, WAL mode |
 | Validation | Zod | ^4.3.6 | Request/form validation |
@@ -155,7 +155,7 @@ The implementation is **mature on the web for a single-user logging tool**. It i
 3. **`src/proxy.ts`** checks for a session token (`AUTH_SECRET || NEXTAUTH_SECRET`, `src/proxy.ts:45`). With no token, an API route gets a 307 redirect to `/login`. *Fails if:* the secret changes, which invalidates every session.
 4. **Route handler** `src/app/api/games/route.ts`:
    - `auth(request)` resolves the session. No user means 401.
-   - **Rate limit:** in-memory 10/min per user on `main`; SQLite-backed after PR #60. Over the limit returns 429 `RATE_LIMIT_EXCEEDED`.
+   - **Rate limit:** 10 per minute per user, SQLite-backed (#60). Over the limit returns 429 `RATE_LIMIT_EXCEEDED`.
    - `getUserProfileAdmin()` loads the user. A missing `defaultWorkspaceId` returns 500 `WORKSPACE_NOT_FOUND`.
    - The workspace is loaded, then `assertWorkspaceActive` (`src/lib/workspaces/enforce.ts`). A `past_due`, `canceled`, `suspended`, or expired-trial workspace returns 403.
    - `getPlanLimits(workspace.plan)` (`src/lib/stripe/plan-mapping.ts`) caps games per month. Over the cap returns 403 with a plan-limit error.
@@ -292,7 +292,7 @@ Verifying a game (`POST /api/verify`) follows the same path. It adds a bcrypt co
 | One app instance is enough | Needs >1 instance for HA or zero-downtime deploys, or CPU saturation (the container uses ~92 MiB RAM and ~0% CPU idle today) |
 | SQLite single-writer is enough | Sustained >~200 writes/sec or long write transactions. Video metadata and chat would change the write profile |
 | Video will live outside SQLite | P4 must put media in object storage. Putting video on the same volume would blow up backup size and the VPS disk |
-| Caddy is the only proxy in front | Adding a CDN (Cloudflare) changes client-IP semantics for rate limiting (`src/lib/rate-limit.ts` in PR #60) |
+| Caddy is the only proxy in front | Adding a CDN (Cloudflare) changes client-IP semantics for rate limiting (`src/lib/rate-limit.ts`) |
 | Parents are the account holders | P1 athlete logins change auth, consent, and data-access rules everywhere |
 | Nobody depends on prod yet | 3 users today. The deploy model (no staging, no auto-rollback) must harden before P2 charges money |
 
@@ -327,7 +327,7 @@ hustle/
 │   ├── types/               # domain.ts (was firestore.ts before PR #59), game.ts, league.ts, player.ts
 │   ├── hooks/ prompts/ schema/ test-utils/ __tests__/
 │   └── env.mjs              # ⚠ dead: stale Postgres-era env schema, imported nowhere
-├── drizzle/                 # SQL migrations 0000–0003 (+0004 rate limits in PR #60) + meta/ journal
+├── drizzle/                 # SQL migrations 0000–0004 (0004 = rate limits) + meta/ journal
 ├── 03-Tests/e2e/            # Playwright specs 00–08 + fixtures (private temp DB per run)
 ├── tests/                   # a few extra vitest suites (dashboard health)
 ├── scripts/                 # check-resend-secrets.py (+tests), test-docker-context.sh, misc
@@ -566,10 +566,10 @@ Ordered by likelihood × impact.
 - **Cause:** `clientIp()` takes the right-most `X-Forwarded-For` entry, which is correct only while Caddy talks directly to clients with no `trusted_proxies`. `dig +short hustlestats.io` = `167.86.106.29` (no CDN).
 - **Fix/Prevention:** if Cloudflare or any other proxy is ever put in front, configure Caddy `trusted_proxies` and revisit `src/lib/rate-limit.ts`. `RATE_LIMIT_SCALE` exists only for E2E, and it only loosens the per-IP rules.
 
-### 8.10 The Release workflow fails on every push to main (fixed in PR #59)
-- **Symptom:** a red ❌ "Release" on every main commit.
-- **Cause:** `release.yml` fell back to a non-existent `v0.0.0` tag, which broke `git log v0.0.0..HEAD`.
-- **Fix:** PR #59 picks the highest reachable semver tag (`v1.0.0`). **Heads-up:** a GitHub release titled **v2.0.0** exists with no matching git tag, so the next auto-release will be **v1.x.y**, which looks older than the "Latest" v2.0.0 release. Decide whether to delete the orphan v2.0.0 release or seed a `v2.0.0` tag.
+### 8.10 Release tags vs. history (fixed 2026-09-18)
+- **What happened:** `release.yml` failed on every push. After the #59 fix, it then fell back to "all history" because the old `v1.0.0` and `v2.0.0` tags point to commits **outside `main`'s current history** (history was replaced at some point). That fallback pushed a 440-line CHANGELOG entry to `main` (`ab5a7a36`).
+- **Fix:** an annotated tag **`v2.1.0`** was seeded on `main` (`ab5a7a36`) as the reboot baseline. Releases now compute from it; the next merge produced **v2.2.0**.
+- **Know this:** `release.yml` **pushes commits straight to `main`** (version bump plus CHANGELOG, marked `[skip ci]`) and creates tags and GitHub releases on every push. After any merge, `git pull` before starting new work. The GitHub release list still shows the orphan `v2.0.0` release (Feb 2026); leave it or delete it, it no longer affects anything.
 
 ### 8.11 Beads (task tracker) state is local
 - **Symptom:** you run `bd ready` and see nothing, or different issues than Jeremy.
@@ -727,7 +727,7 @@ Ordered by likelihood × impact.
 
 ### Test Coverage (measured 2026-09-18)
 
-`npx vitest run --config vitest.config.mts --coverage` (unit suite, v8), on `main` code:
+`npx vitest run --config vitest.config.mts --coverage` (unit suite, v8), on the pre-merge `main` code (the numbers barely move with #59–#62):
 
 | Scope | Lines covered |
 |---|---|
@@ -777,9 +777,9 @@ Critical files:
 | Dream Gym (workouts, cardio, meals, biometrics, journal, assessments, schedule) | ✅ Implemented | `src/app/dashboard/dream-gym/*`, E2E 08 |
 | AI recommendations/strategy | ⚠️ Code works; **prod has no key** | `src/lib/ai/claude.ts:72` |
 | Billing (Stripe) | ⚠️ Implemented, **disabled** | `BILLING_ENABLED=false` in the VPS `.env` |
-| Plan limits | ✅ Enforced at write time; single source after #59 | `src/lib/stripe/plan-mapping.ts` |
-| Rate limiting | ⚠️ Games-only in-memory on `main`; full SQLite limiter in **#60** | `src/lib/rate-limit.ts` (PR #60) |
-| Dependency advisories | ⚠️ 4 critical/13 high on `main`; 0/0 in **#61** | PR #61 |
+| Plan limits | ✅ Enforced at write time; single source (#59) | `src/lib/stripe/plan-mapping.ts` |
+| Rate limiting | ✅ SQLite limiter on sign-in, registration, reset, verification mail, PIN, and games (#60; prod-verified) | `src/lib/rate-limit.ts` |
+| Dependency advisories | ✅ 0 critical / 0 high (7 moderate, dev-only, waived) | #61 |
 | Photo uploads | ✅ Local volume storage | `src/lib/storage/local.ts` |
 | Calendar sync | ❌ Not built | — (P3) |
 | AI adaptive gym plans (openGym patterns) | ❌ Not built | — (P3) |
@@ -790,11 +790,13 @@ Critical files:
 | Staging environment | ❌ None | — |
 | Error tracking / APM | ❌ None | `src/instrumentation.ts` is empty |
 
-**Open PRs at the time of writing:**
+**Merged and deployed on 2026-09-18** (each verified with `/api/health` = healthy after its deploy):
 - **#59** (P0 part 1): dead code removal, Release fix, and plan-limit single source. Also carries the `bd init` beads wiring commit.
 - **#60:** the SQLite rate limiter (new migration `0004_rate_limits.sql`).
 - **#61:** Next 16.3.5 and the Auth.js security bumps.
-- **#62:** the admin allow-list fails closed (`ADMIN_USER_IDS`), and the debug/hello/test-post routes are removed.
+- **#62:** the admin allow-list fails closed (`ADMIN_USER_IDS`), and the debug/hello/test-post routes are removed. Confirmed absent from the prod build.
+- **Production proof for #60:** the same email failed sign-in 10 times with `CredentialsSignin`, and the 11th attempt got `RATE_LIMITED`.
+- **Open: #63** sets `AUTH_URL` from `APP_ORIGIN`. Without it Auth.js builds URLs from the container bind address (`https://0.0.0.0:8084/...`, seen in `/api/auth/providers`). Sign-in still works because the login page ignores those URLs, but Auth.js-driven redirects would break.
 
 ---
 
