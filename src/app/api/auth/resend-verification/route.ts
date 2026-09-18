@@ -7,6 +7,7 @@
  * Phase 4.5 migration: replaces firebase-admin auth.getUserByEmail +
  * generateEmailVerificationLink + Firestore user-doc lookup with Drizzle.
  */
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from '@/lib/rate-limit'
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
@@ -41,6 +42,11 @@ function appOrigin(req: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.verificationEmailByIp, clientIp(request.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   const { email } = await request.json().catch(() => ({ email: '' }));
 
   if (!email || typeof email !== 'string' || !isValidEmail(email)) {

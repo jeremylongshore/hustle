@@ -10,15 +10,12 @@ import { getAllGamesForPlayerAdmin, createGameAdmin, getUnverifiedGamesAdmin } f
 import { getUserProfileAdmin } from '@/lib/db/queries/users'
 import { getWorkspaceByIdAdmin, incrementWorkspaceGamesThisMonthAdmin } from '@/lib/db/queries/workspaces'
 import { getPlanLimits } from '@/lib/stripe/plan-mapping'
+import { consumeRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { WorkspaceAccessError } from '@/lib/workspaces/errors'
 import { assertWorkspaceActive } from '@/lib/workspaces/enforce'
 
 const logger = createLogger('api/games');
 
-// Simple in-memory rate limiting (production: use Redis)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60000; // 1 minute
-const RATE_LIMIT_MAX = 10; // 10 requests per minute
 
 // GET /api/games?playerId=xxx - Get all games for a player
 export async function GET(request: NextRequest) {
@@ -86,25 +83,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting check
-    const userId = session.user.id;
-    const now = Date.now();
-    const userLimit = rateLimitMap.get(userId);
-
-    if (userLimit) {
-      if (now < userLimit.resetTime) {
-        if (userLimit.count >= RATE_LIMIT_MAX) {
-          return NextResponse.json(
-            { error: 'RATE_LIMIT_EXCEEDED', message: 'Rate limit exceeded. Please try again later.' },
-            { status: 429 }
-          );
-        }
-        userLimit.count++;
-      } else {
-        rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-      }
-    } else {
-      rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    // Rate limiting check (SQLite-backed, survives restarts)
+    const limit = consumeRateLimit(RATE_LIMITS.gameCreateByUser, session.user.id);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: 'RATE_LIMIT_EXCEEDED', message: 'Rate limit exceeded. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil(limit.retryAfterMs / 1000))) } }
+      );
     }
 
     // Phase 5 Task 4: Get user's workspace and check plan limits (Admin SDK)

@@ -31,7 +31,9 @@ function LoginPageContent() {
 
       if (!result || result.error) {
         const err = result?.error ?? '';
-        if (err.includes('EMAIL_NOT_VERIFIED')) {
+        if (result?.code === 'RATE_LIMITED') {
+          setError('Too many sign-in attempts. Please wait 15 minutes and try again.');
+        } else if (err.includes('EMAIL_NOT_VERIFIED')) {
           setError('Please verify your email before signing in. Check your inbox for the verification link.');
         } else {
           setError('Invalid email or password.');

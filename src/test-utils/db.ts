@@ -31,6 +31,7 @@ import * as mealLogsSchema from "@/lib/db/schema/meal-logs";
 import * as dreamGymSchema from "@/lib/db/schema/dream-gym";
 import * as scheduleEventsSchema from "@/lib/db/schema/schedule-events";
 import * as billingSchema from "@/lib/db/schema/billing";
+import * as rateLimitsSchema from "@/lib/db/schema/rate-limits";
 
 const schema = {
   ...authSchema,
@@ -49,6 +50,7 @@ const schema = {
   ...dreamGymSchema,
   ...scheduleEventsSchema,
   ...billingSchema,
+  ...rateLimitsSchema,
 };
 
 export type TestDB = ReturnType<typeof drizzle<typeof schema>>;

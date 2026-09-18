@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema/auth";
 import { registerUserWithWorkspace, RegistrationConflictError } from "@/lib/db/provision-user-workspace";
 import { sendVerificationEmail } from "@/lib/resend";
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,6 +20,11 @@ function appOrigin(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.registerByIp, clientIp(req.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   let body: { email?: string; password?: string; name?: string };
   try {
     body = await req.json();

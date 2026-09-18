@@ -5,6 +5,7 @@ import { getUserProfileAdmin } from '@/lib/db/queries/users'
 import { getGameAdmin, verifyGameAdmin } from '@/lib/db/queries/games'
 import { getPlayerAdmin } from '@/lib/db/queries/players'
 import { createLogger } from '@/lib/logger'
+import { consumeRateLimit, rateLimitResponseInit, RATE_LIMITS } from '@/lib/rate-limit'
 
 const logger = createLogger('api/verify')
 
@@ -96,6 +97,13 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     console.log('[Verify API] User has PIN hash')
+
+    // Cap PIN guesses per user: PINs are short, so brute force is the main risk.
+    const limit = consumeRateLimit(RATE_LIMITS.pinByUser, session.user.id);
+    if (!limit.allowed) {
+      const r = rateLimitResponseInit(limit);
+      return NextResponse.json(r.body, r.init);
+    }
 
     // Verify PIN
     console.log('[Verify API] Comparing PIN...')
