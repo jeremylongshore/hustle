@@ -1,3 +1,15 @@
+# Release v2.1.1
+
+**Release Date**: 2026-09-18
+
+## Changes since v2.1.0
+
+- chore: release v2.1.1 [skip ci] (bfe9b182)
+- Merge pull request #61 from jeremylongshore/chore/npm-audit-fixes (dbda0972)
+- fix(deps): patch every critical and high npm audit finding (Next 16.3.5, Auth.js) (17e8177d)
+
+---
+
 # Release v1.0.0
 
 **Release Date**: 2026-09-18
