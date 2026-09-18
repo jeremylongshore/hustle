@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { players } from "./players";
-import type { BiometricsSource } from "@/types/firestore";
+import type { BiometricsSource } from "@/types/domain";
 
 /**
  * Biometrics log table — was Firestore subcollection

@@ -1,1 +1,0 @@
-projects/pipelinepilot-prod/locations/us-central1/publishers/google/models/veo-3.0-generate-001/operations/83246b4c-f132-4166-b154-5d67b7026e9e

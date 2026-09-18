@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { WorkoutSetLog } from '@/types/firestore';
+import type { WorkoutSetLog } from '@/types/domain';
 
 interface SetTrackerProps {
   setNumber: number;

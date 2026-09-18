@@ -19,7 +19,7 @@ import type {
   Workspace,
   WorkspaceDocument,
   WorkspaceMember,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 type WorkspaceRow = typeof workspaces.$inferSelect;
 type MemberRow = typeof workspaceMembers.$inferSelect;

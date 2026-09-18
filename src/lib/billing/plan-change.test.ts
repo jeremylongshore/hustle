@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Workspace, WorkspaceStatus } from '@/types/firestore';
+import type { Workspace, WorkspaceStatus } from '@/types/domain';
 
 // Use vi.hoisted to define mocks before they're hoisted
 const mockStripe = vi.hoisted(() => ({

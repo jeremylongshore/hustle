@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera. Upscale executive environment: Close-up of expensive Rolex watch on wrist as hand signs contracts, luxury fountain pen on financial documents, calculator with large numbers, spreadsheets showing profit projections and revenue streams. Cut to: Counting cash, financial statements with dollar signs, investment return charts. Empty luxury box seats at stadium with champagne glasses. Cold transactional atmosphere. Cinematography: Extreme close-ups of wealth signifiers, sharp focus on money and documents, cold professional lighting, corporate aesthetic. Style: 'Wall Street' meets 'The Wolf of Wall Street' - greed and calculation."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg5/",
-    "sampleCount": 1
-  }
-}

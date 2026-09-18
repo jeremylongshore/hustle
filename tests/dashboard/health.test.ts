@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { WorkspaceHealthData } from '@/lib/dashboard/health';
-import type { WorkspaceStatus } from '@/types/firestore';
+import type { WorkspaceStatus } from '@/types/domain';
 
 // Mock data factory
 function createMockHealthData(status: WorkspaceStatus): WorkspaceHealthData {

@@ -14,7 +14,7 @@ import {
 import { format, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { getInitials, getAvatarColor } from '@/lib/player-utils';
-import type { MealLog, MealType } from '@/types/firestore';
+import type { MealLog, MealType } from '@/types/domain';
 
 // ─── Types ────────────────────────────────────────────────────
 interface PlayerOption {

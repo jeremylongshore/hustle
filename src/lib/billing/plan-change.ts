@@ -10,7 +10,7 @@
  */
 
 import { getStripeClient } from '@/lib/stripe/client';
-import type { Workspace, WorkspacePlan } from '@/types/firestore';
+import type { Workspace, WorkspacePlan } from '@/types/domain';
 import {
   getPriceIdForPlan,
   getPlanForPriceId,

@@ -21,7 +21,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { LogWorkoutModal } from '@/components/dashboard/LogWorkoutModal';
-import type { Player, WorkoutLog } from '@/types/firestore';
+import type { Player, WorkoutLog } from '@/types/domain';
 
 async function fetchPlayersViaApi(): Promise<Player[]> {
   const res = await fetch('/api/players', { cache: 'no-store' });

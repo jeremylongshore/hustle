@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { getPlayerAdmin } from '@/lib/db/queries/players';
 import { createMealLogAdmin, getMealLogsAdmin } from '@/lib/db/queries/meal-logs';
 import { mealLogCreateSchema, mealLogQuerySchema } from '@/lib/validations/meal-log-schema';
-import type { MealType } from '@/types/firestore';
+import type { MealType } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/players/[id]/meal-logs');

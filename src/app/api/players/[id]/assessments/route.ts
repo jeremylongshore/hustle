@@ -14,7 +14,7 @@ import {
   fitnessTestMetadata,
   validateAssessmentValue,
 } from '@/lib/validations/assessment-schema';
-import type { FitnessTestType } from '@/types/firestore';
+import type { FitnessTestType } from '@/types/domain';
 
 const logger = createLogger('api/players/[id]/assessments');
 

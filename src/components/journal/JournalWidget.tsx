@@ -2,7 +2,7 @@
 
 import { JournalEntryCard } from './JournalEntryCard';
 import { JournalQuickEntry } from './JournalQuickEntry';
-import type { JournalEntry, JournalMoodTag, JournalEnergyTag, JournalContext } from '@/types/firestore';
+import type { JournalEntry, JournalMoodTag, JournalEnergyTag, JournalContext } from '@/types/domain';
 
 interface JournalWidgetProps {
   recentEntries: JournalEntry[];

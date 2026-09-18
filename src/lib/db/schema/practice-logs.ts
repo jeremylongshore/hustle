@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { players } from "./players";
-import type { PracticeType, PracticeFocusArea } from "@/types/firestore";
+import type { PracticeType, PracticeFocusArea } from "@/types/domain";
 
 /**
  * Practice log table — was Firestore subcollection

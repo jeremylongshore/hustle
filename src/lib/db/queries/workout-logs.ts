@@ -19,7 +19,7 @@ import { workoutLogs } from "@/lib/db/schema/workout-logs";
 import type {
   WorkoutLog,
   WorkoutLogType,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   WorkoutLogCreateInput,
   WorkoutLogUpdateInput,

@@ -14,7 +14,7 @@ import type {
   DreamGymSchedule,
   SoccerPositionCode,
   Player,
-} from '@/types/firestore';
+} from '@/types/domain';
 
 const EQUIPMENT_OPTIONS: { value: DreamGymEquipment; label: string }[] = [
   { value: 'dumbbells', label: 'Dumbbells' },

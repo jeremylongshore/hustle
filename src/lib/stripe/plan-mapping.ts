@@ -5,7 +5,7 @@
  * Provides plan limit enforcement data.
  */
 
-import type { WorkspacePlan, WorkspaceStatus } from '@/types/firestore';
+import type { WorkspacePlan, WorkspaceStatus } from '@/types/domain';
 import type Stripe from 'stripe';
 
 /**

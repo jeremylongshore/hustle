@@ -16,7 +16,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema/auth";
 import { workspaces } from "@/lib/db/schema/workspaces";
-import type { User, UserDocument } from "@/types/firestore";
+import type { User, UserDocument } from "@/types/domain";
 
 async function getOwnedWorkspaceIds(userId: string): Promise<string[]> {
   const rows = await db

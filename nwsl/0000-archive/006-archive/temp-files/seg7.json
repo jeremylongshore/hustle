@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera. Return to young girls on soccer field - now at dusk with purple-orange sky. Young girls ages 10-14 sitting on bench looking confused and uncertain, coach crouching trying to explain something difficult. Close-up of young girl's face showing confusion and hurt. Girl holding soccer ball, looking down at it sadly. Empty youth soccer field as sun sets, single abandoned ball on darkening grass, goals silhouetted against twilight sky. Cinematography: Twilight golden hour transitioning to dusk, warm then cooling colors, emotional close-ups, shallow depth of field, handheld intimate camera work. Style: Coming-of-age drama documentary - innocence confronting harsh reality."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg7/",
-    "sampleCount": 1
-  }
-}

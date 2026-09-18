@@ -6,7 +6,7 @@
  * local-FS upload routes plus the React client components.
  */
 
-import type { WorkspacePlan } from "@/types/firestore";
+import type { WorkspacePlan } from "@/types/domain";
 
 /**
  * Storage limits by plan tier.

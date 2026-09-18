@@ -6,7 +6,7 @@
  * Role-based permission system for workspace collaborators.
  */
 
-import type { Workspace, WorkspaceMemberRole } from '@/types/firestore';
+import type { Workspace, WorkspaceMemberRole } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('workspaces/access-control');

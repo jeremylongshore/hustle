@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { players } from "./players";
-import type { FitnessTestType, FitnessTestUnit } from "@/types/firestore";
+import type { FitnessTestType, FitnessTestUnit } from "@/types/domain";
 
 /**
  * Fitness assessment table — was Firestore subcollection

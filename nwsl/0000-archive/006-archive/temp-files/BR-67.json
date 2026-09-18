@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Photorealistic. Cinematic lensing. Shallow depth of field. Naturalistic movement. Clipboard woodgrain texture dissolving into bench woodgrain at golden hour dusk. 2.5 seconds. No on-screen text, no captions, no signage, no UI, no watermarks or logos."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/BR-67/",
-    "sampleCount": 1
-  }
-}

@@ -3,7 +3,7 @@ import {
   legacyPositionFromPrimaryPosition,
   primaryPositionFromLegacyPosition,
 } from '@/lib/player-position';
-import type { SoccerPositionCode } from '@/types/firestore';
+import type { SoccerPositionCode } from '@/types/domain';
 
 describe('legacyPositionFromPrimaryPosition', () => {
   it('maps GK to Goalkeeper', () => {

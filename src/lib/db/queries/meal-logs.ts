@@ -7,7 +7,7 @@
 import { and, desc, eq, gte, lte, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { mealLogs } from "@/lib/db/schema/meal-logs";
-import type { MealLog, MealType } from "@/types/firestore";
+import type { MealLog, MealType } from "@/types/domain";
 import type { MealLogCreateInput } from "@/lib/validations/meal-log-schema";
 
 type MealLogRow = typeof mealLogs.$inferSelect;

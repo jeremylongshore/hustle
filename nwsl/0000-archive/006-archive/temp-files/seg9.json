@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Black screen with white text centered reading 'Why Won't They Answer?'. Minimalist documentary end card. Clean typography. Stark contrast. 4 seconds."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg9/",
-    "sampleCount": 1
-  }
-}

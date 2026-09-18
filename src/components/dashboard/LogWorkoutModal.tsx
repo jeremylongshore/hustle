@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import type { WorkoutExerciseLog } from '@/types/firestore';
+import type { WorkoutExerciseLog } from '@/types/domain';
 
 interface LogWorkoutModalProps {
   isOpen: boolean;

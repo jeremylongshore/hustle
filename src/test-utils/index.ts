@@ -7,7 +7,7 @@
 
 import { vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import type { Workspace, WorkspacePlan, WorkspaceStatus } from '@/types/firestore';
+import type { Workspace, WorkspacePlan, WorkspaceStatus } from '@/types/domain';
 import type { Session, DashboardUser } from '@/lib/auth';
 
 // ---------------------------------------------------------------------------

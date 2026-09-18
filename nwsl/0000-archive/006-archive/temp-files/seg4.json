@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera with drone. Exterior aerial establishing shot: Brand new CPKC Stadium in Kansas City - stunning modern architecture, beautiful women's soccer-specific venue, pristine empty stadium with perfectly manicured grass. Drone descends from aerial view down toward field level. Cut to: Ground-level walking through empty luxury suites and premium seating, state-of-the-art facilities. Beautiful new construction, built specifically for women's soccer. Majestic but empty. Cinematography: Drone cinematography, smooth aerial movements, architectural beauty shots, golden hour lighting, 4K broadcast quality. Style: Architectural documentary meets sports venue showcase - beautiful but haunting emptiness."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg4/",
-    "sampleCount": 1
-  }
-}

@@ -11,7 +11,7 @@ import type {
   JournalEntry,
   JournalContext,
   JournalMoodTag,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   JournalEntryCreateInput,
   JournalEntryUpdateInput,

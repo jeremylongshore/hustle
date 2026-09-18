@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { WorkoutSummaryCard } from './WorkoutSummaryCard';
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 
 interface WorkoutHistoryListProps {
   workouts: WorkoutLog[];

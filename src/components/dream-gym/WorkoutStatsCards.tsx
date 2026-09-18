@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 
 interface WorkoutStatsCardsProps {
   workouts: WorkoutLog[];

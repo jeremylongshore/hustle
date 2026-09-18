@@ -5,7 +5,7 @@ import type {
   JournalContext,
   JournalMoodTag,
   JournalEnergyTag,
-} from '@/types/firestore';
+} from '@/types/domain';
 
 interface JournalEditorProps {
   initialContent?: string;

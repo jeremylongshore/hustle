@@ -10,7 +10,7 @@ import { biometricsLogs } from "@/lib/db/schema/biometrics";
 import type {
   BiometricsLog,
   BiometricsSource,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   BiometricsLogCreateInput,
   BiometricsLogUpdateInput,

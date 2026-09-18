@@ -10,7 +10,7 @@ import { cardioLogs } from "@/lib/db/schema/cardio-logs";
 import type {
   CardioLog,
   CardioActivityType,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   CardioLogCreateInput,
   CardioLogUpdateInput,

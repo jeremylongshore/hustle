@@ -11,7 +11,7 @@ import type {
   PracticeLog,
   PracticeType,
   PracticeFocusArea,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   PracticeLogCreateInput,
   PracticeLogUpdateInput,

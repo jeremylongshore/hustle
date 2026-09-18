@@ -29,7 +29,7 @@ import {
   canManageMember,
 } from './access-control';
 import type { WorkspacePermission } from './access-control';
-import type { Workspace, WorkspaceMemberRole } from '@/types/firestore';
+import type { Workspace, WorkspaceMemberRole } from '@/types/domain';
 
 // ---------------------------------------------------------------------------
 // Helpers

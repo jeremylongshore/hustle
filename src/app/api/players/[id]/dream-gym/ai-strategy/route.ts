@@ -5,7 +5,7 @@ import { getPlayerAdmin } from '@/lib/db/queries/players';
 import { getDreamGymAdmin } from '@/lib/db/queries/dream-gym';
 import { getWorkoutLogsAdmin } from '@/lib/db/queries/workout-logs';
 import { getBiometricsTrendsAdmin } from '@/lib/db/queries/biometrics';
-import type { Player, DreamGym, WorkoutLog } from '@/types/firestore';
+import type { Player, DreamGym, WorkoutLog } from '@/types/domain';
 import type { BiometricsTrends } from '@/lib/db/queries/biometrics';
 import {
   generateWorkoutStrategy,

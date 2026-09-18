@@ -4,7 +4,7 @@ import type {
   JournalContext,
   JournalMoodTag,
   JournalEnergyTag,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 /**
  * Journal entry table — was Firestore subcollection

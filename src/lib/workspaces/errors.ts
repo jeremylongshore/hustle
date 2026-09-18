@@ -9,7 +9,7 @@
  * HTTP status to surface verbatim in API route responses.
  */
 
-import type { WorkspaceStatus } from "@/types/firestore";
+import type { WorkspaceStatus } from "@/types/domain";
 
 /**
  * Get user-friendly error message for access denial.

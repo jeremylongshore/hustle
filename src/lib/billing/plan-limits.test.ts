@@ -12,7 +12,8 @@ import {
   getLimitWarningMessage,
   type PlanLimits,
 } from '@/lib/billing/plan-limits';
-import type { Workspace } from '@/types/firestore';
+import type { Workspace } from '@/types/domain';
+import { getPlanLimits } from '@/lib/stripe/plan-mapping';
 
 /**
  * Helper to create a mock workspace
@@ -293,4 +294,16 @@ describe('State Thresholds (Integration)', () => {
       expect(limits.games.state).toBe(expectedGames);
     });
   });
+});
+
+describe('single source of truth with enforcement', () => {
+  it.each(['free', 'starter', 'plus', 'pro'] as const)(
+    'reports the same %s limits that the write routes enforce',
+    (plan) => {
+      const enforced = getPlanLimits(plan);
+      const shown = evaluatePlanLimits(createMockWorkspace(plan, 0, 0));
+      expect(shown.player.limit).toBe(enforced.maxPlayers);
+      expect(shown.games.limit).toBe(enforced.maxGamesPerMonth);
+    }
+  );
 });

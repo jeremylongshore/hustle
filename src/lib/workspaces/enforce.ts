@@ -17,7 +17,7 @@
  * - trial: Full access during trial period
  */
 
-import type { Workspace, WorkspaceStatus } from '@/types/firestore';
+import type { Workspace, WorkspaceStatus } from '@/types/domain';
 import { WorkspaceAccessError } from '@/lib/workspaces/errors';
 
 /**

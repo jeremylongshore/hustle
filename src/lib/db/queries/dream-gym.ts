@@ -20,7 +20,7 @@ import type {
   DreamGymMentalCheckIn,
   DreamGymEventClient,
   DreamGymMentalCheckInClient,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 type DreamGymRow = typeof dreamGym.$inferSelect;
 

@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { users } from "./auth";
 import { workspaces } from "./workspaces";
-import type { PlayerGender, SoccerPositionCode } from "@/types/firestore";
+import type { PlayerGender, SoccerPositionCode } from "@/types/domain";
 import type { LeagueCode } from "@/types/league";
 
 export const players = sqliteTable("player", {

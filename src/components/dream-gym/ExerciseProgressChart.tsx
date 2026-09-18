@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 
 interface ExerciseProgressChartProps {
   workouts: WorkoutLog[];

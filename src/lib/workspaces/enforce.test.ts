@@ -14,7 +14,7 @@ import {
   isWorkspaceReadable,
 } from "./enforce";
 import { WorkspaceAccessError } from "@/lib/workspaces/errors";
-import type { Workspace, WorkspaceStatus } from "@/types/firestore";
+import type { Workspace, WorkspaceStatus } from "@/types/domain";
 
 function createTestWorkspace(status: WorkspaceStatus): Workspace {
   return {

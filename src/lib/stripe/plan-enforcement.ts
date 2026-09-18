@@ -30,7 +30,7 @@ import {
 import type {
   WorkspacePlan,
   WorkspaceStatus,
-} from "@/types/firestore";
+} from "@/types/domain";
 import {
   getPlanForPriceId,
   mapStripeStatusToWorkspaceStatus,

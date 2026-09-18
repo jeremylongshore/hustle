@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Photorealistic. Cinematic lensing. Shallow depth of field. Naturalistic movement. Clinical overhead fluorescent light flickering once, quick and unnerving. 2.5 seconds. No on-screen text, no captions, no signage, no UI, no watermarks or logos."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/BR-56/",
-    "sampleCount": 1
-  }
-}

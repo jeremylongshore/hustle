@@ -6,7 +6,7 @@ import {
   getJournalEntriesAdmin,
 } from '@/lib/db/queries/journal';
 import { journalEntryCreateSchema, journalEntryQuerySchema } from '@/lib/validations/journal-schema';
-import type { JournalContext, JournalMoodTag } from '@/types/firestore';
+import type { JournalContext, JournalMoodTag } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/players/[id]/journal');

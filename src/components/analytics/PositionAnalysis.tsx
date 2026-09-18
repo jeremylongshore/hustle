@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Target, Shield, Goal, Users } from 'lucide-react';
-import type { SoccerPositionCode } from '@/types/firestore';
+import type { SoccerPositionCode } from '@/types/domain';
 
 interface GameWithPlayer {
   id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 
 interface WorkoutSummaryCardProps {
   workout: WorkoutLog;

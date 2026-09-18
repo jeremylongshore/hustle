@@ -1,4 +1,4 @@
-import type { SoccerPositionCode } from '@/types/firestore';
+import type { SoccerPositionCode } from '@/types/domain';
 
 export type LegacyPositionCategory = 'Goalkeeper' | 'Defender' | 'Midfielder' | 'Forward';
 
