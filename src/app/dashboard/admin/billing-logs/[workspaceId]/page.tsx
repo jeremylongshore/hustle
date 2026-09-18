@@ -4,7 +4,7 @@
  * Phase 7 Task 8: Full Subscription Lifecycle Ledger
  *
  * Read-only view of billing ledger events for a specific workspace.
- * Admin-only access (same UID allow-list as replay endpoint).
+ * Admin-only access via isAdmin() from @/lib/admin (ADMIN_USER_IDS, fails closed).
  *
  * Shows last 50 ledger entries with:
  * - Event type

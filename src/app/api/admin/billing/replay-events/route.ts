@@ -8,7 +8,8 @@
  *
  * Phase 4.5 migration: workspace + user lookups moved off Firestore onto Drizzle.
  *
- * Security: Admin-only endpoint (UID allow-list; empty list = dev mode, allow all).
+ * Security: admin-only. isAdmin() from @/lib/admin reads ADMIN_USER_IDS and fails
+ * closed (unset or empty means nobody is an admin).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
