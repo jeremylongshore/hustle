@@ -4,7 +4,7 @@
  * Phase 7 Task 8: Full Subscription Lifecycle Ledger
  *
  * Read-only view of billing ledger events for a specific workspace.
- * Admin-only access (same UID allow-list as replay endpoint).
+ * Admin-only access via isAdmin() from @/lib/admin (ADMIN_USER_IDS, fails closed).
  *
  * Shows last 50 ledger entries with:
  * - Event type
@@ -21,29 +21,7 @@ import { Metadata } from 'next';
 import { authWithProfile } from '@/lib/auth';
 import { getBillingLedger } from '@/lib/stripe/ledger';
 import { redirect } from 'next/navigation';
-
-/**
- * Admin allow-list (UIDs)
- *
- * Add NextAuth user IDs of admin users who can access this page.
- * In production, prefer a roles table over a hardcoded allow-list.
- */
-const ADMIN_UIDS: string[] = [
-  // Add your admin user IDs here
-];
-
-/**
- * Check if user is admin
- */
-function isAdmin(uid: string): boolean {
-  // If allow-list is empty, allow all authenticated users (dev mode)
-  if (ADMIN_UIDS.length === 0) {
-    console.warn('[Admin] ADMIN_UIDS allow-list is empty - allowing all authenticated users');
-    return true;
-  }
-
-  return ADMIN_UIDS.includes(uid);
-}
+import { isAdmin } from '@/lib/admin';
 
 export const metadata: Metadata = {
   title: 'Billing Logs - Admin',

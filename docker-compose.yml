@@ -22,6 +22,8 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-}
       APP_ORIGIN: ${APP_ORIGIN:-https://hustlestats.io}
       BILLING_ENABLED: ${BILLING_ENABLED:?BILLING_ENABLED must be explicitly true or false}
+      # Comma-separated user IDs allowed into /api/admin/* and /dashboard/admin/*. Empty = no admins (fail closed).
+      ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_PRICE_ID_STARTER: ${STRIPE_PRICE_ID_STARTER:-}
