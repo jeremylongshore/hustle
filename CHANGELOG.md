@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   missing email configuration now produces an honest degraded health response.
 - Add unit, fake-clock, SQLite route and real local TLS SMTP fixture regressions.
   Document deployment, protected backups, limits of no-send verification and
-  rollback in [the email runbook](000-docs/6784-OD-RUNB-smtp-email-operations.md).
+  rollback in [the email runbook](000-docs/278-OD-OPNS-smtp-email-operations.md).
 - Make production billing mode explicit and pass the complete Stripe variable
   set through Compose. This prevents `/api/healthz` liveness from concealing an
   implicitly enabled but unconfigured billing subsystem; billing remains
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Turbopack file tracing, and preserve Next's framework-controlled dynamic-render
   exceptions through application authentication catches.
 - Record demonstrated migration failures, regression evidence and verification
-  boundaries in [the browser incident report](000-docs/6785-AA-INC-auth-migration-browser-regressions.md).
+  boundaries in [the browser incident report](000-docs/279-OD-INCD-auth-browser-regressions.md).
 
 ### Security — 2026-09-13
 
@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   application unit tests pass after the correction.
 - Record why the earlier repair did not reach main, independently verified
   rejection of both reported keys, and the separate empty production email
-  configuration in [the incident report](000-docs/6783-AA-INC-resend-secret-exposure.md).
+  configuration in [the incident report](000-docs/277-OD-INCD-resend-secret-exposure.md).
   Historical Git objects remain; credential rejection does not prove past misuse
   did not occur. Application email delivery is not claimed restored by this scrub.
 
@@ -84,7 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Makefile targets: `crawl-adk-docs`, `crawl-adk-docs-local`, `setup-crawler`
   - GitHub Actions workflow for automated weekly crawls
   - Successfully crawled 118 pages, generated 2,568 chunks
-  - Documentation: `000-docs/6781-AT-ARCH-adk-docs-crawl-pipeline.md`
+  - Documentation: `000-docs/262-MS-archive/6781-AT-ARCH-adk-docs-crawl-pipeline.md`
 - **Strategic Planning Documentation**:
   - `249-AA-STRT-cto-critical-path-scout-agent-rag.md` - CTO strategy with CoT reasoning
   - `250-LS-STAT-adk-crawler-execution-complete.md` - Crawler execution summary
@@ -118,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `250-PP-PLAN-agentic-qa-automation-workflow.md` - Comprehensive plan for Vertex AI agent-driven QA automation
   - `251-AA-AUDT-cto-critical-issues.md` - CTO-level critical issues audit (corrected: migration Phases 1-3 complete)
 - **Intent Solutions IO Branding**:
-  - Downloaded 3 generated logos (Category Creator Emblem variants) to `000-docs/logos/`
+  - Downloaded 3 generated logos (Category Creator Emblem variants) to `000-docs/262-MS-archive/` (272–275)
   - Imagen 3 generation with `block_only_high` safety filter
   - `BLOCKED_PROMPTS.md` documenting why 3 logo prompts failed safety filter
 

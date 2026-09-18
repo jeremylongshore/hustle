@@ -19,7 +19,7 @@ called Resend, while the generic notification helper also required `EMAIL_FROM`,
 which the deployed Compose service did not pass. A source scrub alone cannot
 restore email delivery. The established estate sender is MXroute; restoring
 application mail through that path is the separate runtime correction described
-in [the SMTP operations runbook](6784-OD-RUNB-smtp-email-operations.md).
+in [the SMTP operations runbook](278-OD-OPNS-smtp-email-operations.md).
 
 ## UTC evidence and repair history
 
