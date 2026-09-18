@@ -42,7 +42,7 @@ There is **no automatic rollback**. If the smoke test fails, a human fixes forwa
 
 **The three biggest risks right now:**
 
-1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both are fixed in PR #62, which merges first (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
+1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both were fixed and deployed in #62 on 2026-09-18 (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
 2. **AI features are dead in production.** `ANTHROPIC_API_KEY` is not in the prod environment, so every AI route throws (§8.2).
 3. **The product handles minors' data**, and the safety and consent foundation (doc 285) is not built yet. Nothing public-facing (recruiting profiles, video, leaderboards) ships until it is.
 
