@@ -12,6 +12,7 @@
 | 283 | [App Store / Play pathway](283-PP-PLAN-app-store-pathway.md) | PWA, then Expo; prerequisites, compliance, release steps |
 | 284 | [Competitive landscape](284-RA-ANLY-competitive-landscape.md) | Recruiting, training, and stats competitors; openGym; where we win |
 | 285 | [Minor safety & compliance](285-BL-CMPL-minor-safety-compliance.md) | COPPA, state laws, stores, video/CSAM, messaging, NCAA; for counsel review |
+| 286 | [Operator audit and onboarding playbook](286-AA-AUDT-appaudit-devops-playbook.md) | Full system analysis for new contributors: architecture, setup, deploy, sharp edges, security, roadmap |
 | 276 | [Key rotation inventory](276-TQ-SECU-key-rotation-inventory.md) | Masked secret inventory from the 2026-07 scrub |
 | 277 | [Resend secret exposure](277-OD-INCD-resend-secret-exposure.md) | Incident RCA (2026-09) |
 | 278 | [SMTP email operations](278-OD-OPNS-smtp-email-operations.md) | Live runbook for MXroute SMTP and the email health probe |
