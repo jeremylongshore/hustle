@@ -48,3 +48,9 @@ next-env.d.ts
 # nwsl/archive_*/venv-videos/bin/python symlinks during file tracing.
 /nwsl
 03-Tests/e2e/.runtime/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
