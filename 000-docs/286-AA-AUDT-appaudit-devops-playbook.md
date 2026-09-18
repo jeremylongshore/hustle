@@ -38,7 +38,7 @@ There is **no automatic rollback**. If the smoke test fails, a human fixes forwa
 **The code is far ahead of the usage.** Production has **3 user accounts, 0 athletes, 0 games, 0 workspaces**, per a row-count check against both the live DB and last night's backup on 2026-09-18. The codebase holds roughly 49,000 lines of TypeScript across 66 API routes and 40 pages, with ~900 unit tests and ~87 E2E tests. In practice we are building a product for its first real users. We are not maintaining a live system with customers, and that is the right mental model for risk. Breaking prod is cheap today; it won't be once families are on it.
 
 **The three biggest risks right now:**
-1. **Admin authorization failed open.** Fixed in PR #62 (fail-closed `ADMIN_USER_IDS`), which must merge before anything else (§8.1).
+1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both are fixed in PR #62, which merges first (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
 2. **AI features are dead in production.** `ANTHROPIC_API_KEY` is not in the prod environment, so every AI route throws (§8.2).
 3. **The product handles minors' data**, and the safety and consent foundation (doc 285) is not built yet. Nothing public-facing (recruiting profiles, video, leaderboards) ships until it is.
 
@@ -308,7 +308,7 @@ hustle/
 │   ├── app/                 # Next.js App Router: pages + API routes
 │   │   ├── (public)/        # landing, login, register, reset-password, verify-email
 │   │   ├── dashboard/       # authenticated UI: athletes, games, dream-gym/*, analytics, billing, schedule, settings, profile, admin
-│   │   ├── api/             # 66 route handlers (auth, players, games, dream-gym, billing, storage, health, internal, admin, debug)
+│   │   ├── api/             # 66 route handlers on main (61 after #62 removes debug/hello/test-post). See Appendix E
 │   │   ├── privacy/ terms/  # legal pages
 │   │   └── layout.tsx, providers.tsx, error.tsx, not-found.tsx
 │   ├── auth.ts              # Auth.js config (Credentials provider, JWT, email-verified gate)
@@ -576,6 +576,17 @@ Ordered by likelihood × impact.
 - **Cause:** the beads Dolt database (`.beads/embeddeddolt/`) is gitignored and lives only on the machine where it was created. The repo carries only an export (`.beads/issues.jsonl`) and the GitHub/Plane mirrors. The DB was re-initialized on 2026-09-18 with prefix `hustle`, and the pre-reboot 213-issue store is preserved in `.beads/backup/`.
 - **Fix:** follow the work through **GitHub issues #52–#58** (one per roadmap phase) and Plane project **HST**. Coordinate with Jeremy before running `bd init` in your clone.
 
+### 8.12 Stripe webhooks can't reach the app (billing will silently break)
+- **Symptom (the day billing turns on):** checkout succeeds in Stripe, but the workspace plan never changes, and cancellations and failed payments are never recorded.
+- **Cause:** `src/proxy.ts` exempts only `/api/auth/`, `/api/health*`, and `/api/internal/` from the session redirect (lines 15-28). Stripe sends no cookie, so `POST /api/billing/webhook` and `POST /api/webhooks/stripe` both get a 307 to `/login` before the handler runs. Separately, the two handlers overlap: both process `customer.subscription.updated/deleted` and `invoice.payment_failed`, and both use the same `webhookEvent` idempotency key. Whichever runs first marks the event done, and the other skips it.
+- **Fix:** allow-list **one** webhook path in the proxy, merge the handlers, and add a test that a signed event reaches the handler. Bead `hustle-rs5.1`. **This blocks P2.**
+- **Prevention:** any route authenticated by something other than the cookie (webhooks, internal jobs, future mobile bearer tokens) must be added to `publicPrefixes` *and* do its own auth.
+
+### 8.13 About a third of the API is dead or duplicated
+- **Symptom:** you fix a bug in one route and the UI doesn't change.
+- **Cause:** migration leftovers. Examples: `/api/practice-logs` (used) vs `/api/players/[id]/practice-logs` (unused); `/api/workout-logs` (used) vs `/api/players/[id]/dream-gym/workout-logs` (only called from unused components); `billing/create-portal-session` (used; the *weaker* one) vs `billing/portal` (unused). `error-boundary.tsx:22` posts to `/api/error`, which doesn't exist. The full list is in Appendix E.
+- **Fix:** before editing a route, grep for its caller: `rg "api/<path>" src/app src/components`. Cleanup is tracked in bead `hustle-pk7.9`.
+
 ---
 
 ## 9. Security & Access
@@ -629,8 +640,11 @@ Ordered by likelihood × impact.
 - No audit log of data access.
 - No error tracking or alerting on app exceptions.
 - Plaintext prod `.env`.
-- The `debug/*` API routes still ship. `debug/auth-state` refuses in production, but `debug/biometrics/[playerId]` and `debug/workout-logs/[playerId]` are session-gated only. Remove them.
-- `/api/hello` and `/api/test-post` ship (behind the auth redirect).
+- **Cross-family data read through debug routes, fixed in PR #62.** `debug/biometrics/[playerId]` and `debug/workout-logs/[playerId]` looked up the player but never stopped when it wasn't the caller's, then returned logs by `playerId` alone. PR #62 deletes all debug routes, plus `/api/hello` and `/api/test-post`.
+- **Ownership is only as strong as each route's check.** Most query functions ignore their `userId` argument and filter by `playerId` alone (e.g. `src/lib/db/queries/biometrics.ts:90`, `workout-logs.ts:102`). Every `players/[id]/**` route is safe today only because it calls `getPlayerAdmin` first, and the debug routes show what one missed check does. Bead `hustle-4dc.2` moves ownership into the query layer.
+- **Internal error text reaches clients** in about 12 routes (AI, checkout, webhook, verify, storage, and the public `/api/health`, which also lists missing env var names). Bead `hustle-4dc.3`.
+- **Workspace status is enforced on only 4 write routes.** Canceled or past-due workspaces can still write most log types (`hustle-4dc.4`).
+- **Weak input validation** on `players/create`, the Dream Gym JSON fields, and uploads (client-supplied MIME type; no `nosniff`). Bead `hustle-4dc.5`.
 - The minors' safety foundation (consent flows, parent controls, moderation, NCMEC runbook, no adult-to-minor messaging) is **all still to build**. See 285 for what's legally required versus best practice, **pending counsel review**.
 
 ---
@@ -651,8 +665,18 @@ Ordered by likelihood × impact.
 
 ### Performance
 
-- **Latency:** not measured. No APM. Health endpoints answer in ~3–8 ms of server time (`latencyMs` in `/api/health`), and the landing page returned in ~0.46 s end-to-end from the dev box.
-- **Throughput:** not load-tested.
+- **Latency** was measured 2026-09-18: 50 sequential requests per URL from the dev box, each a fresh TLS connection, so the numbers include the network and TLS handshake.
+
+  | URL | p50 | p95 | p99 | Status |
+  |---|---|---|---|---|
+  | `/` (landing) | 507 ms | 606 ms | 644 ms | 200 |
+  | `/login` | 474 ms | 561 ms | 603 ms | 200 |
+  | `/api/health` (DB + env check) | 382 ms | 512 ms | 540 ms | 200 |
+  | `/api/healthz` (no DB) | 372 ms | 530 ms | 557 ms | 200 |
+
+  Server time is small: `/api/health` reports `latencyMs` of 3–8. So ~370 ms of every request is network and TLS between the dev box and the VPS. Real users see their own round trip plus roughly 0–130 ms of rendering. There is no APM, so authenticated pages and write routes are unmeasured.
+- **Data size:** the production DB file is 4 KB, plus the WAL. The whole data volume is 344 KB, with 3 users.
+- **Throughput:** not load-tested. At this data size a load test would measure Node and Next, not the database. Re-run it once real data exists.
 - **Error budget:** not defined.
 
 ### Scaling Limits
@@ -680,7 +704,9 @@ Ordered by likelihood × impact.
 ### What Needs Attention
 
 - **High:**
-  - Admin fail-open → fixed in PR #62; merge it first (`hustle-4dc.1`).
+  - Admin fail-open and cross-family debug reads → fixed in PR #62; merge it first (`hustle-4dc.1`).
+  - Ownership lives only in route handlers, not queries → one missed check leaks data → `hustle-4dc.2`.
+  - Stripe webhooks unreachable, with duplicate handlers → billing would silently break → `hustle-rs5.1` (blocks P2).
   - Minors' safety foundation absent → can't ship public or social features → P1 (285, counsel review).
   - No error tracking → failures are silent → add an error tracker, or at least log-based alerting to Slack.
 - **Medium:**
@@ -688,13 +714,58 @@ Ordered by likelihood × impact.
   - No rollback → a bad deploy needs manual recovery → build in CI with a kept previous image.
   - Migrations swallow errors → silent half-migrated schema → fail loudly and add a health check.
   - Plaintext prod secrets → not on the estate SOPS standard → `sops-init`.
+  - Internal error text returned to clients; health data logged → `hustle-4dc.3`.
+  - Workspace status enforced on only 4 write routes → `hustle-4dc.4`.
+  - Unit coverage 23.9% with no CI gate; auth, games, verify, and webhooks at 0% unit (E2E covers some) → §11.
 - **Low:**
   - Node 20/22 drift.
   - Stale Firebase config and README.
   - Dead `src/env.mjs`.
-  - Debug and test routes shipping.
+  - About a third of API routes are dead or duplicated (`hustle-pk7.9`).
   - Orphan v2.0.0 GitHub release.
   - 157 ESLint warnings.
+
+### Test Coverage (measured 2026-09-18)
+
+`npx vitest run --config vitest.config.mts --coverage` (unit suite, v8), on `main` code:
+
+| Scope | Lines covered |
+|---|---|
+| **Whole `src/`** | **23.9%** (1,845 / 7,731); statements 23.4%, branches 21.5%, functions 19.5% |
+| `src/lib/workspaces` (status enforcement, access) | 96.3% |
+| `src/lib/billing` | 96.2% |
+| `src/lib/validations` (Zod schemas) | 92.4% |
+| `src/lib/db` (queries, schema) | 57.9% |
+| `src/lib/stripe` | 52.9% |
+| `src/app/api` (route handlers) | 24.7% |
+| `src/lib/ai` | 15.0% |
+| `src/app` pages | 3.7% |
+| `src/components`, `src/hooks` | 0% |
+
+Critical files:
+
+| File | Coverage |
+|---|---|
+| `src/proxy.ts` | 100% |
+| `src/lib/workspaces/enforce.ts` | 97% |
+| `src/lib/stripe/plan-mapping.ts` | 95% |
+| `src/lib/storage/local.ts` | 89% |
+| `src/lib/stripe/plan-enforcement.ts` | 83% |
+| `src/app/api/billing/webhook` | 31% |
+| `src/auth.ts` | **0%** |
+| `src/lib/auth.ts` | **0%** |
+| `src/lib/db/index.ts` | **0%** |
+| `src/app/api/games` | **0%** |
+| `src/app/api/verify` | **0%** |
+| `src/app/api/webhooks/stripe` | **0%** |
+
+**How to read this.** Unit coverage is strong on the pure domain rules (enforcement, limits, validation) and weak on route handlers and UI.
+- The **E2E suite** (9 specs, ~87 tests) covers much of what unit tests miss: sign-in, registration, games, athletes, Dream Gym. It isn't counted in these numbers.
+- Real gaps with no automated test at any layer:
+  - both Stripe webhooks (and they're unreachable anyway, §8.12)
+  - the PIN verify brute-force path (limiter in #60)
+  - cross-family access, i.e. tests that a foreign `playerId` is refused (`hustle-4dc.2`)
+- There is **no coverage gate in CI**. Add one *after* P1 raises the floor, so it doesn't just block PRs.
 
 ### Implementation Status
 
@@ -719,11 +790,11 @@ Ordered by likelihood × impact.
 | Staging environment | ❌ None | — |
 | Error tracking / APM | ❌ None | `src/instrumentation.ts` is empty |
 
-**Open PRs at the time of writing** (#59–#61 CI-green; #62 in CI):
+**Open PRs at the time of writing:**
 - **#59** (P0 part 1): dead code removal, Release fix, and plan-limit single source. Also carries the `bd init` beads wiring commit.
 - **#60:** the SQLite rate limiter (new migration `0004_rate_limits.sql`).
 - **#61:** Next 16.3.5 and the Auth.js security bumps.
-- **#62:** the admin allow-list fails closed (`ADMIN_USER_IDS`).
+- **#62:** the admin allow-list fails closed (`ADMIN_USER_IDS`), and the debug/hello/test-post routes are removed.
 
 ---
 
@@ -736,7 +807,8 @@ This mirrors `000-docs/281-PP-RMAP-finish-roadmap.md`. Each phase has an **exit 
 - Merge PR #62 (admin fail-closed), then set `ADMIN_USER_IDS` on the VPS.
 - Add `ANTHROPIC_API_KEY` to compose and the VPS `.env`. `/api/ai/recommend` works in prod.
 - Node 22 in CI; `engines` and `.nvmrc` added.
-- Remove `debug/*`, `hello`, `test-post`, the Dockerfile Firebase args, and the dead `src/env.mjs`. Rewrite `.env.example` and the README.
+- Remove the Dockerfile Firebase args and the dead `src/env.mjs`. Rewrite `.env.example` and the README. (The debug and test routes are already gone in #62.)
+- Move ownership into the query layer (`hustle-4dc.2`), with a test per route family that a foreign `playerId` is refused.
 
 ### Month 1 — Foundation (P1 safety + verified stats)
 - The parent consent flow and athlete sub-accounts are designed and **reviewed by counsel** (285).
@@ -848,3 +920,28 @@ Check that the key is present: `ssh intentsolutions 'grep -c ANTHROPIC /srv/hust
 5. **Counsel for doc 285:** who, and when? P1 can't close without it.
 6. **D-U-N-S / app-store org accounts:** started?
 7. **AI budget and model:** the monthly Claude spend cap and default model for P3.
+
+### E. API Route Inventory (all 66 routes, reviewed 2026-09-18)
+
+**Gate:** `src/proxy.ts` redirects any `/api/*` request without a session to `/login` (307). The only exceptions are `/api/auth/*`, `/api/health*`, and `/api/internal/*`. Handlers then check the session themselves.
+
+**Ownership pattern:** `getPlayerAdmin(userId, playerId)` (`src/lib/db/queries/players.ts:55-57`), then a query by `playerId`. A route is safe only if it **stops** when `getPlayerAdmin` returns null (§9).
+
+| Area | Routes | Auth | Ownership | Status | Notes |
+|---|---|---|---|---|---|
+| Auth (public) | `auth/[...nextauth]`, `register`, `verify-email`, `forgot-password`, `reset-password`, `resend-verification`, `logout`; **unused:** `send-password-reset`, `send-verification` | Public by design | Token-based where relevant | Live | Rate limits arrive in #60 |
+| Players | `players` GET, `players/create` POST, `players/[id]` GET/PUT/DELETE | Session | Scoped by userId / `getPlayerAdmin` | Live | `create` has presence-only validation (`hustle-4dc.5`) |
+| Games and verify | `games` GET/POST, `verify` POST | Session | `getPlayerAdmin` | Live | Games enforces status and plan. Verify doesn't check status |
+| Dream Gym (per player) | `players/[id]/{assessments,biometrics,cardio-logs,journal,meal-logs,dream-gym,dream-gym/check-in}` + item routes | Session | `getPlayerAdmin` | Mostly live; the item `[logId]`/`[entryId]`/`[assessmentId]` routes and `dream-gym/events` are unused | No status enforcement (`hustle-4dc.4`); unvalidated JSON fields |
+| Flat logs | `workout-logs`, `practice-logs` | Session | `getPlayerAdmin` | **Live** (used by the dashboard) | Nested twins are unused |
+| Schedule | `schedule`, `schedule/[eventId]` | Session | Scoped by userId | Live | `playerIds` not ownership-checked |
+| Analytics | `analytics` | Session | Scoped by userId | Live | — |
+| AI | `ai/recommend`, `players/[id]/dream-gym/ai-strategy`; **unused:** `ai/feedback` | Session (proxy); ai-strategy also `getPlayerAdmin` | — | **Broken in prod** (no key, §8.2) | No per-user limits (`hustle-ebv.1`) |
+| Billing | `billing/create-portal-session` (live); **unused:** `create-checkout-session`, `change-plan`, `portal`, `invoices` | Session | Default workspace | Off (`BILLING_ENABLED=false`) | Price-ID and return-URL validation (`hustle-rs5.2`) |
+| Webhooks | `billing/webhook`, `webhooks/stripe` | Stripe signature | Stripe customer ID | **Unreachable** (§8.12) | Duplicate handlers (`hustle-rs5.1`) |
+| Admin | `admin/billing/replay-events` (+ page `dashboard/admin/billing-logs`) | Session + `isAdmin` | — | Fail-closed after #62 | — |
+| Storage | `storage/serve/[...path]`, `upload-user-photo`, `delete-user-photo`; **unused:** `upload-player-photo`, `delete-player-photo` | Session | Owner or a member of the owner's default workspace | Live | Traversal-safe (`local.ts:145-154`); no `nosniff` |
+| Account/workspace | `account/pin`, `workspace/current`, `waitlist` | Session | Self | Live; **`waitlist` needs a session, so the public form can't work** | — |
+| Internal | `internal/trial-reminders` | Bearer `HUSTLE_INTERNAL_TOKEN` (timing-safe) | — | Live (systemd timer) | — |
+| Health | `healthz` (compose, CI), `health`, `health/email` (deploy smoke); **unused:** `healthcheck` (says "Firestore") | Public | — | Live | `/api/health` leaks env var names and DB error text (`hustle-4dc.3`) |
+| Removed in #62 | `debug/auth-state`, `debug/biometrics/[playerId]`, `debug/workout-logs/[playerId]`, `hello`, `test-post` | — | — | Deleted | The two data debug routes allowed cross-family reads |
