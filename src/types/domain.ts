@@ -1,21 +1,15 @@
 /**
- * Firestore Data Types
+ * Domain Types
  *
- * TypeScript interfaces for Firestore documents.
- * These map from the PostgreSQL Prisma schema to Firestore collections.
+ * Shared TypeScript types for Hustle's domain records (workspaces, users,
+ * players, games, Dream Gym logs, billing). Persistence is Drizzle on SQLite
+ * (src/lib/db/schema); these types describe the shapes the app passes around.
  *
- * Collection Structure:
- * /workspaces/{workspaceId}
- * /users/{userId}
- *   /players/{playerId}
- *     /games/{gameId}
- * /waitlist/{email}
+ * History: this module was src/types/firestore.ts during the Firebase era.
+ * Several interfaces keep their original `*Document` names for source
+ * compatibility; date fields are plain JS Dates.
  */
 
-// Phase 4.5g: legacy Firestore document type aliases retained for source
-// compatibility across 90+ importers. The firebase Timestamp import is
-// dropped — every "document" field that used to be a Firestore Timestamp
-// is now a plain JS Date (which is also what the Drizzle schema returns).
 type Timestamp = Date;
 import type { LeagueCode } from './league';
 import type { PerformanceRating, GameEmotionTag } from './game';

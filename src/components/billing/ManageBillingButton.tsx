@@ -10,7 +10,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { WorkspaceStatus } from '@/types/firestore';
+import type { WorkspaceStatus } from '@/types/domain';
 
 interface ManageBillingButtonProps {
   workspaceStatus: WorkspaceStatus;

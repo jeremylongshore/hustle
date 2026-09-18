@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 4-second video. Shot on RED camera. Extreme close-up of teenage female athlete (16-17 years old) in soccer uniform, sitting alone in massive empty stadium. Her face fills frame - raw authentic emotion, single tear forming and rolling down cheek, eyes looking directly into camera with devastating question. Expression shows heartbreak, confusion, and pleading. No words, just pure human emotion asking \"why?\" Shallow depth of field, stadium blurred behind her. Cinematography: Extreme emotional close-up, twilight lighting, shallow depth of field (f/1.4), film grain, handheld slight movement for intimacy, RED camera skin tones. Style: Prestige drama like 'Moonlight' or 'Manchester by the Sea' - devastating emotional truth."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg8/",
-    "sampleCount": 1
-  }
-}

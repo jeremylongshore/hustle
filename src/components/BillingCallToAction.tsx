@@ -10,7 +10,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { WorkspaceStatus } from '@/types/firestore';
+import type { WorkspaceStatus } from '@/types/domain';
 
 interface BillingCallToActionProps {
   /**

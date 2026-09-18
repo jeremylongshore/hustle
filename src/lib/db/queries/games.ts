@@ -12,7 +12,7 @@ import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema/games";
 import { players } from "@/lib/db/schema/players";
-import type { Game, GameDocument } from "@/types/firestore";
+import type { Game, GameDocument } from "@/types/domain";
 import { isE2ETestMode } from "@/lib/e2e";
 
 type GameRow = typeof games.$inferSelect;

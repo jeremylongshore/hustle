@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { players } from "./players";
-import type { CardioActivityType } from "@/types/firestore";
+import type { CardioActivityType } from "@/types/domain";
 
 /**
  * Cardio log table — was Firestore subcollection

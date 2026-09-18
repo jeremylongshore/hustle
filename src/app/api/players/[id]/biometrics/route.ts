@@ -7,7 +7,7 @@ import {
   getBiometricsTrendsAdmin,
 } from '@/lib/db/queries/biometrics';
 import { biometricsLogCreateSchema, biometricsLogQuerySchema, biometricsSources } from '@/lib/validations/biometrics-schema';
-import type { BiometricsSource } from '@/types/firestore';
+import type { BiometricsSource } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/players/[id]/biometrics');

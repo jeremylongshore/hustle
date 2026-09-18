@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { users } from "./auth";
-import type { ScheduleEventType } from "@/types/firestore";
+import type { ScheduleEventType } from "@/types/domain";
 
 /**
  * Schedule events table — was Firestore subcollection

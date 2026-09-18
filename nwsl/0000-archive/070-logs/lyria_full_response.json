@@ -1,7 +1,0 @@
-{
-  "error": {
-    "code": 400,
-    "message": "Audio generation failed with the following error: Music generation failed. Try modifying your prompt.",
-    "status": "INVALID_ARGUMENT"
-  }
-}

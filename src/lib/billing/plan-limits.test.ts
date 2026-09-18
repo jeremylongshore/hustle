@@ -12,7 +12,7 @@ import {
   getLimitWarningMessage,
   type PlanLimits,
 } from '@/lib/billing/plan-limits';
-import type { Workspace } from '@/types/firestore';
+import type { Workspace } from '@/types/domain';
 
 /**
  * Helper to create a mock workspace

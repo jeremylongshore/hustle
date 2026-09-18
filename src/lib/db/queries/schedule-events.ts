@@ -14,7 +14,7 @@ import { scheduleEvents } from "@/lib/db/schema/schedule-events";
 import type {
   ScheduleEvent,
   ScheduleEventType,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   ScheduleEventCreateInput,
   ScheduleEventUpdateInput,

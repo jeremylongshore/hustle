@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { WorkspaceStatus } from '@/types/firestore';
+import type { WorkspaceStatus } from '@/types/domain';
 
 /**
  * Workspace access permissions

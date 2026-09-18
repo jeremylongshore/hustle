@@ -10,7 +10,7 @@
 'use client';
 
 import Link from 'next/link';
-import { WorkspacePlan } from '@/types/firestore';
+import { WorkspacePlan } from '@/types/domain';
 
 interface PaywallNoticeProps {
   /**

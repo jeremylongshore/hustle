@@ -5,7 +5,7 @@
  * Does NOT enforce limits - purely informational for UI display.
  */
 
-import type { Workspace } from '@/types/firestore';
+import type { Workspace } from '@/types/domain';
 
 export type LimitState = 'ok' | 'warning' | 'critical';
 

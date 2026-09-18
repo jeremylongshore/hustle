@@ -10,7 +10,7 @@
  */
 
 import { getWorkspaceByIdAdmin } from "@/lib/db/queries/workspaces";
-import type { WorkspaceStatus } from "@/types/firestore";
+import type { WorkspaceStatus } from "@/types/domain";
 import { WorkspaceAccessError } from "@/lib/workspaces/errors";
 
 /**

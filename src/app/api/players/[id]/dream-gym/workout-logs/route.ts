@@ -7,7 +7,7 @@ import {
   getWorkoutLogsAdmin,
 } from '@/lib/db/queries/workout-logs';
 import { workoutLogCreateSchema, workoutLogQuerySchema } from '@/lib/validations/workout-log-schema';
-import type { WorkoutLogType } from '@/types/firestore';
+import type { WorkoutLogType } from '@/types/domain';
 
 const logger = createLogger('api/players/[id]/dream-gym/workout-logs');
 

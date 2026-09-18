@@ -20,7 +20,7 @@ import { getUserProfileAdmin } from '@/lib/db/queries/users';
 import { getWorkspaceByIdAdmin } from '@/lib/db/queries/workspaces';
 import { players } from '@/lib/db/schema/players';
 import { games } from '@/lib/db/schema/games';
-import type { WorkspaceStatus, WorkspacePlan } from '@/types/firestore';
+import type { WorkspaceStatus, WorkspacePlan } from '@/types/domain';
 
 export interface WorkspaceHealthData {
   workspace: {

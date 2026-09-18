@@ -14,7 +14,7 @@ import type {
   Player,
   PlayerGender,
   SoccerPositionCode,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type { LeagueCode } from "@/types/league";
 
 type PlayerRow = typeof players.$inferSelect;

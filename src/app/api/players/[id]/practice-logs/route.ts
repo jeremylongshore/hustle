@@ -6,7 +6,7 @@ import {
   getPracticeLogsAdmin,
 } from '@/lib/db/queries/practice-logs';
 import { practiceLogCreateSchema, practiceLogQuerySchema } from '@/lib/validations/practice-log-schema';
-import type { PracticeType, PracticeFocusArea } from '@/types/firestore';
+import type { PracticeType, PracticeFocusArea } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/players/[id]/practice-logs');

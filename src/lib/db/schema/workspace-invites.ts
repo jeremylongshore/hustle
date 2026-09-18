@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { users } from "./auth";
 import { workspaces } from "./workspaces";
-import type { WorkspaceMemberRole } from "@/types/firestore";
+import type { WorkspaceMemberRole } from "@/types/domain";
 
 export const workspaceInvites = sqliteTable("workspaceInvite", {
   id: text("id")

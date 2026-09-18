@@ -4,7 +4,7 @@ import type {
   WorkspacePlan,
   WorkspaceStatus,
   WorkspaceMemberRole,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 export const workspaces = sqliteTable("workspace", {
   id: text("id")

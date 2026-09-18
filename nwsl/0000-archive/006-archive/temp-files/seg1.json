@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera documentary style. Young girls ages 8-12 playing competitive soccer on sunny field during golden hour. Slow motion: Girl dribbling ball with intense focus and joy, close-up of cleats striking ball, girls celebrating goal together with pure excitement, high-fives and hugs, authentic children's athletic movements, diverse young athletes, genuine childhood passion and competitive spirit. Cinematography: Warm golden lighting, shallow depth of field, film grain, slow motion at 120fps, handheld gimbal movement, ESPN documentary quality. Natural outdoor lighting, real grass field, authentic youth soccer atmosphere. Style: Prestige sports documentary like 'The Two Escobars' - real, emotional, beautiful."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg1/",
-    "sampleCount": 1
-  }
-}

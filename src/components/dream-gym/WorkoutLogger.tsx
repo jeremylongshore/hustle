@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { SetTracker } from './SetTracker';
-import type { WorkoutExerciseLog, WorkoutSetLog, WorkoutExercise } from '@/types/firestore';
+import type { WorkoutExerciseLog, WorkoutSetLog, WorkoutExercise } from '@/types/domain';
 
 interface WorkoutLoggerProps {
   exercise: WorkoutExercise;

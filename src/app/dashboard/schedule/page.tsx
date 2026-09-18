@@ -32,7 +32,7 @@ import {
   scheduleEventTypes,
   getScheduleEventTypeLabel,
 } from '@/lib/validations/schedule-event-schema';
-import type { ScheduleEvent, ScheduleEventType } from '@/types/firestore';
+import type { ScheduleEvent, ScheduleEventType } from '@/types/domain';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

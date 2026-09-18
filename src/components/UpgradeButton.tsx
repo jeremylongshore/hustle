@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import type { WorkspacePlan } from '@/types/firestore';
+import type { WorkspacePlan } from '@/types/domain';
 
 interface UpgradeButtonProps {
   workspaceId: string;

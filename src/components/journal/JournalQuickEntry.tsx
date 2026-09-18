@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { JournalContext, JournalMoodTag, JournalEnergyTag } from '@/types/firestore';
+import type { JournalContext, JournalMoodTag, JournalEnergyTag } from '@/types/domain';
 
 interface JournalQuickEntryProps {
   context?: JournalContext;

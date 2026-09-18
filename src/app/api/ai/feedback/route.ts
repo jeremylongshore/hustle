@@ -5,7 +5,7 @@
  * and returns the generated feedback.
  */
 import { NextResponse } from 'next/server';
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/ai/feedback');

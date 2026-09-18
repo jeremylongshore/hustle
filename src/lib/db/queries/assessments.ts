@@ -12,7 +12,7 @@ import { assessments } from "@/lib/db/schema/assessments";
 import type {
   FitnessAssessment,
   FitnessTestType,
-} from "@/types/firestore";
+} from "@/types/domain";
 import type {
   FitnessAssessmentCreateInput,
   FitnessAssessmentUpdateInput,

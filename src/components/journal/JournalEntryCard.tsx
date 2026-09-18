@@ -1,6 +1,6 @@
 'use client';
 
-import type { JournalEntry, JournalMoodTag, JournalEnergyTag, JournalContext } from '@/types/firestore';
+import type { JournalEntry, JournalMoodTag, JournalEnergyTag, JournalContext } from '@/types/domain';
 
 interface JournalEntryCardProps {
   entry: JournalEntry;

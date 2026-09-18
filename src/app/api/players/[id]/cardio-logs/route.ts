@@ -6,7 +6,7 @@ import {
   getCardioLogsAdmin,
 } from '@/lib/db/queries/cardio-logs';
 import { cardioLogCreateSchema, cardioLogQuerySchema } from '@/lib/validations/cardio-log-schema';
-import type { CardioActivityType } from '@/types/firestore';
+import type { CardioActivityType } from '@/types/domain';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('api/players/[id]/cardio-logs');

@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { createLogger } from '@/lib/logger';
 import { getPlayerAdmin } from '@/lib/db/queries/players';
 import { getDreamGymAdmin, upsertDreamGymAdmin, updateWeeklyGridAdmin } from '@/lib/db/queries/dream-gym';
-import type { DreamGymProfile, DreamGymSchedule } from '@/types/firestore';
+import type { DreamGymProfile, DreamGymSchedule } from '@/types/domain';
 
 const logger = createLogger('api/players/[id]/dream-gym');
 

@@ -1,5 +1,0 @@
-# Vertex AI Video Generation Dependencies
-# For NWSL policy videos using Veo 3
-
-google-cloud-aiplatform>=1.50.0
-vertexai>=1.50.0

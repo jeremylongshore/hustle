@@ -25,7 +25,7 @@ import { getStripeClient } from "@/lib/stripe/client";
 import { db } from "@/lib/db";
 import { workspaces } from "@/lib/db/schema/workspaces";
 import { getWorkspaceByIdAdmin } from "@/lib/db/queries/workspaces";
-import type { WorkspacePlan, WorkspaceStatus } from "@/types/firestore";
+import type { WorkspacePlan, WorkspaceStatus } from "@/types/domain";
 import {
   getPlanForPriceId,
   mapStripeStatusToWorkspaceStatus,

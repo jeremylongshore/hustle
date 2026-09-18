@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera. Luxury corporate office interior: Modern glass building, sleek contemporary design, expensive minimalist furniture. Close-up sequence: Expensive fountain pen signing $30 million check, hands reviewing financial documents with large dollar amounts visible, stacks of investment portfolios on desk. Cut to: Modern soccer stadium construction site with cranes and \"Future Home\" signage. Architectural rendering visible on wall showing new stadium plans. Cinematography: Cold professional lighting, sharp business aesthetic, clean corporate documentary style, smooth gimbal movements. Style: 'The Big Short' financial documentary aesthetic - money and investment."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg3/",
-    "sampleCount": 1
-  }
-}

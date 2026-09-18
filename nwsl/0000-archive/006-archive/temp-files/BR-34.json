@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Photorealistic. Cinematic lensing. Shallow depth of field. Naturalistic movement. Construction crane silhouette against bright sky, slow upward tilt revealing clouds. 2.5 seconds. No on-screen text, no captions, no signage, no UI, no watermarks or logos."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/BR-34/",
-    "sampleCount": 1
-  }
-}

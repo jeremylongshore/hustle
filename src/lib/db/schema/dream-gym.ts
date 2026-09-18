@@ -5,7 +5,7 @@ import type {
   DreamGymSchedule,
   DreamGymEvent,
   DreamGymMentalCheckIn,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 /**
  * Dream Gym table — was Firestore subcollection

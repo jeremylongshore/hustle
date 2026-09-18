@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { players } from "./players";
-import type { MealType } from "@/types/firestore";
+import type { MealType } from "@/types/domain";
 
 /**
  * Meal log table — was Firestore subcollection

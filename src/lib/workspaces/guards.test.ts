@@ -14,7 +14,7 @@ import { eq } from "drizzle-orm";
 import { makeTestDb, mockDbModule, type TestDB } from "@/test-utils/db";
 import * as authSchema from "@/lib/db/schema/auth";
 import * as workspacesSchema from "@/lib/db/schema/workspaces";
-import type { WorkspaceStatus } from "@/types/firestore";
+import type { WorkspaceStatus } from "@/types/domain";
 import { WorkspaceAccessError } from "@/lib/workspaces/errors";
 
 let testDb: TestDB;

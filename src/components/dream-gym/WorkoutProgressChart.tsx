@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import type { WorkoutLog } from '@/types/firestore';
+import type { WorkoutLog } from '@/types/domain';
 
 interface WorkoutProgressChartProps {
   workouts: WorkoutLog[];

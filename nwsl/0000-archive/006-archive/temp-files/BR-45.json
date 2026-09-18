@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Photorealistic. Cinematic lensing. Shallow depth of field. Naturalistic movement. Champagne flute catching light that echoes the glint of a luxury watch face. 2.5 seconds. No on-screen text, no captions, no signage, no UI, no watermarks or logos."}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/BR-45/",
-    "sampleCount": 1
-  }
-}

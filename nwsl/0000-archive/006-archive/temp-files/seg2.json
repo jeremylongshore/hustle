@@ -1,7 +1,0 @@
-{
-  "instances": [{"prompt": "Create PHOTOREALISTIC 8-second video. Shot on RED camera. Empty corporate executive office. Slow push-in on dark wood desk with nameplate, official NWSL documents visible, leather executive chair facing away toward floor-to-ceiling windows showing city skyline. Cold fluorescent and natural window lighting creating institutional atmosphere. Official plaques on wall, coffee cup abandoned on desk, silent and powerful but disconnected. Camera slowly dollies toward the empty chair. Cinematography: Cold blue color grading, sharp focus, corporate documentary style, deliberate slow camera movement, 24fps cinematic. Style: 'The Social Network' or 'Margin Call' - cold institutional power. --- ## Text Overlays (Phase 2A Update) - \"Jessica Berman — NWSL Commissioner (since 2022).\" - \"The league's Board of Governors (club ownership representatives) controls major decisions.\""}],
-  "parameters": {
-    "storageUri": "gs://pipelinepilot-prod-veo-videos/seg2/",
-    "sampleCount": 1
-  }
-}

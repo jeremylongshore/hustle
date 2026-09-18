@@ -3,7 +3,7 @@ import { players } from "./players";
 import type {
   WorkoutLogType,
   WorkoutExerciseLog,
-} from "@/types/firestore";
+} from "@/types/domain";
 
 /**
  * Workout log table — was Firestore subcollection
