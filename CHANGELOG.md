@@ -1,3 +1,16 @@
+# Release v2.2.0
+
+**Release Date**: 2026-09-18
+
+## Changes since v2.1.1
+
+- chore: release v2.2.0 [skip ci] (7ed6907c)
+- Merge pull request #60 from jeremylongshore/feat/sqlite-rate-limits (8173bc2a)
+- fix(security): restrict the E2E rate-limit scale to per-IP rules only (acaaca95)
+- feat(security): add SQLite-backed rate limits to login, signup, password reset, and PIN (73c7f6e3)
+
+---
+
 # Release v2.1.1
 
 **Release Date**: 2026-09-18
