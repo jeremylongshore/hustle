@@ -1,3 +1,18 @@
+# Release v2.2.2
+
+**Release Date**: 2026-09-18
+
+## Changes since v2.2.1
+
+- chore: release v2.2.2 [skip ci] (db8bfae6)
+- Merge pull request #64 from jeremylongshore/docs/appaudit-ravi-onboarding (84bcb6af)
+- docs(audit): update 286 for the merged P0 and security PRs and the release-tag fix (88d67d3b)
+- docs(audit): record the local E2E result (87/87 passed) in 286 (75720706)
+- docs(audit): close the 286 gaps with coverage, measured latency, and a full route inventory (28a3d972)
+- docs: add operator-grade audit and onboarding playbook (286) for new contributors (d2d07099)
+
+---
+
 # Release v2.2.1
 
 **Release Date**: 2026-09-18
