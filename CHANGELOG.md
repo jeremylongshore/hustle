@@ -1,3 +1,16 @@
+# Release v2.2.3
+
+**Release Date**: 2026-09-18
+
+## Changes since v2.2.2
+
+- chore: release v2.2.3 [skip ci] (3b604c0e)
+- Merge pull request #65 from jeremylongshore/docs/audit-286-refresh (ca93010b)
+- docs(audit): mark the access-control fix as deployed in the 286 summary (62da056d)
+- docs(audit): refresh 286 status lines after #59-#64 merged and fix list spacing (2c884611)
+
+---
+
 # Release v2.2.2
 
 **Release Date**: 2026-09-18
