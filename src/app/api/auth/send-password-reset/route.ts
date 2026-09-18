@@ -8,6 +8,7 @@
  * Phase 4.5 migration: replaces firebase-admin auth.generatePasswordResetLink
  * with a Drizzle-backed token in `passwordResetToken`.
  */
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from '@/lib/rate-limit'
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
@@ -31,6 +32,11 @@ function appOrigin(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.passwordResetByIp, clientIp(req.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   try {
     const { email } = (await req.json()) as { email: string };
     if (!email) {

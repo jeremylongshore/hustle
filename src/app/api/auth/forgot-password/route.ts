@@ -11,6 +11,7 @@ import { eq, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema/auth";
 import { sendPasswordResetEmail } from "@/lib/resend";
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,6 +25,11 @@ function appOrigin(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.passwordResetByIp, clientIp(req.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   let body: { email?: string };
   try {
     body = await req.json();
@@ -33,6 +39,10 @@ export async function POST(req: NextRequest) {
 
   const email = String(body.email ?? "").toLowerCase().trim();
   if (!email) return NextResponse.json({ ok: true });
+  // Per-email cap: over the limit we still answer ok (no account enumeration) but send nothing.
+  if (!consumeRateLimit(RATE_LIMITS.passwordResetByEmail, email).allowed) {
+    return NextResponse.json({ ok: true });
+  }
 
   // Opportunistic cleanup of expired reset tokens.
   await db.delete(passwordResetTokens).where(lt(passwordResetTokens.expires, new Date()));

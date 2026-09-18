@@ -8,6 +8,7 @@
  * round-trip. The token shape + table match the existing /api/auth/register
  * route (see references therein).
  */
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from '@/lib/rate-limit'
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'node:crypto';
@@ -31,6 +32,11 @@ function appOrigin(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.verificationEmailByIp, clientIp(req.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   try {
     const body = (await req.json()) as { uid?: string; email?: string; firstName?: string };
     const email = String(body.email ?? '').toLowerCase().trim();

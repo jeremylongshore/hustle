@@ -29,6 +29,13 @@
       "when": 1779598046768,
       "tag": "0003_p45_stripe_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789749631083,
+      "tag": "0004_rate_limits",
+      "breakpoints": true
     }
   ]
 }

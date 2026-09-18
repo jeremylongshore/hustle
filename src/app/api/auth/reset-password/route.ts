@@ -9,11 +9,17 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema/auth";
+import { consumeRateLimit, clientIp, rateLimitResponseInit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const limit = consumeRateLimit(RATE_LIMITS.passwordResetByIp, clientIp(req.headers));
+  if (!limit.allowed) {
+    const r = rateLimitResponseInit(limit);
+    return NextResponse.json(r.body, r.init);
+  }
   let body: { token?: string; password?: string };
   try {
     body = await req.json();

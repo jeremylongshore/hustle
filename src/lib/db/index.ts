@@ -19,6 +19,7 @@ import * as mealLogsSchema from "./schema/meal-logs";
 import * as dreamGymSchema from "./schema/dream-gym";
 import * as scheduleEventsSchema from "./schema/schedule-events";
 import * as billingSchema from "./schema/billing";
+import * as rateLimitsSchema from "./schema/rate-limits";
 
 const dbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "data/hustle.db");
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -45,6 +46,7 @@ export const db = drizzle(sqlite, {
     ...dreamGymSchema,
     ...scheduleEventsSchema,
     ...billingSchema,
+    ...rateLimitsSchema,
   },
 });
 export type DB = typeof db;
