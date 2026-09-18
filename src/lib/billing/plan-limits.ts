@@ -3,9 +3,12 @@
  *
  * Evaluates workspace usage against plan limits and determines warning states.
  * Does NOT enforce limits - purely informational for UI display.
+ * Limit numbers come from getPlanLimits() in plan-mapping.ts, the single source
+ * of truth that the write routes enforce.
  */
 
-import type { Workspace } from '@/types/domain';
+import type { Workspace, WorkspacePlan } from '@/types/domain';
+import { getPlanLimits } from '@/lib/stripe/plan-mapping';
 
 export type LimitState = 'ok' | 'warning' | 'critical';
 
@@ -19,28 +22,6 @@ export interface PlanLimits {
   player: ResourceLimit;
   games: ResourceLimit;
 }
-
-/**
- * Plan definitions - matches actual plan limits from plan-mapping.ts
- */
-const PLAN_LIMITS = {
-  free: {
-    players: 2,
-    gamesPerMonth: 10,
-  },
-  starter: {
-    players: 5,
-    gamesPerMonth: 50,
-  },
-  plus: {
-    players: 15,
-    gamesPerMonth: 200,
-  },
-  pro: {
-    players: 9999, // Effectively unlimited
-    gamesPerMonth: 9999,
-  },
-} as const;
 
 /**
  * State thresholds
@@ -83,8 +64,7 @@ function calculateLimitState(used: number, limit: number): LimitState {
  * @returns Plan limits evaluation with state indicators
  */
 export function evaluatePlanLimits(workspace: Workspace): PlanLimits {
-  const plan = workspace.plan || 'free';
-  const planConfig = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || PLAN_LIMITS.free;
+  const planConfig = getPlanLimits((workspace.plan || 'free') as WorkspacePlan) ?? getPlanLimits('free');
 
   const playerUsage = workspace.usage?.playerCount || 0;
   const gamesUsage = workspace.usage?.gamesThisMonth || 0;
@@ -92,13 +72,13 @@ export function evaluatePlanLimits(workspace: Workspace): PlanLimits {
   return {
     player: {
       used: playerUsage,
-      limit: planConfig.players,
-      state: calculateLimitState(playerUsage, planConfig.players),
+      limit: planConfig.maxPlayers,
+      state: calculateLimitState(playerUsage, planConfig.maxPlayers),
     },
     games: {
       used: gamesUsage,
-      limit: planConfig.gamesPerMonth,
-      state: calculateLimitState(gamesUsage, planConfig.gamesPerMonth),
+      limit: planConfig.maxGamesPerMonth,
+      state: calculateLimitState(gamesUsage, planConfig.maxGamesPerMonth),
     },
   };
 }
