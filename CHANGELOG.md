@@ -1,3 +1,15 @@
+# Release v2.2.1
+
+**Release Date**: 2026-09-18
+
+## Changes since v2.2.0
+
+- chore: release v2.2.1 [skip ci] (3da2831f)
+- Merge pull request #63 from jeremylongshore/fix/auth-url-public-origin (66bb4c09)
+- fix(auth): set AUTH_URL to the public origin so Auth.js stops emitting https://0.0.0.0:8084 URLs (7bb9af91)
+
+---
+
 # Release v2.2.0
 
 **Release Date**: 2026-09-18
