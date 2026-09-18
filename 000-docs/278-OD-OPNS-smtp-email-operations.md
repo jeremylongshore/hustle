@@ -3,7 +3,7 @@
 Hustle sends verification, password reset and notification mail through the
 existing approved MXroute SMTP account. The estate sender decision predates
 this repair; no new account or Resend credential is required. The incident
-history is in [the exposure RCA](6783-AA-INC-resend-secret-exposure.md).
+history is in [the exposure RCA](277-OD-INCD-resend-secret-exposure.md).
 
 ## Configuration and ownership
 
