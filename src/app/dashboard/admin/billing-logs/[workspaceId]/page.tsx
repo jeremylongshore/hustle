@@ -21,29 +21,7 @@ import { Metadata } from 'next';
 import { authWithProfile } from '@/lib/auth';
 import { getBillingLedger } from '@/lib/stripe/ledger';
 import { redirect } from 'next/navigation';
-
-/**
- * Admin allow-list (UIDs)
- *
- * Add NextAuth user IDs of admin users who can access this page.
- * In production, prefer a roles table over a hardcoded allow-list.
- */
-const ADMIN_UIDS: string[] = [
-  // Add your admin user IDs here
-];
-
-/**
- * Check if user is admin
- */
-function isAdmin(uid: string): boolean {
-  // If allow-list is empty, allow all authenticated users (dev mode)
-  if (ADMIN_UIDS.length === 0) {
-    console.warn('[Admin] ADMIN_UIDS allow-list is empty - allowing all authenticated users');
-    return true;
-  }
-
-  return ADMIN_UIDS.includes(uid);
-}
+import { isAdmin } from '@/lib/admin';
 
 export const metadata: Metadata = {
   title: 'Billing Logs - Admin',

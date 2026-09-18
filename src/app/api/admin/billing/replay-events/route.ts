@@ -22,23 +22,9 @@ import {
 } from '@/lib/db/queries/workspaces';
 import { enforceWorkspacePlan } from '@/lib/stripe/plan-enforcement';
 import { createLogger } from '@/lib/logger';
+import { isAdmin } from '@/lib/admin';
 
 const logger = createLogger('api/admin/billing/replay-events');
-
-/**
- * Admin allow-list (user IDs). Empty array = dev mode (allow all authenticated users).
- */
-const ADMIN_UIDS: string[] = [
-  // Add admin user IDs here.
-];
-
-function isAdmin(uid: string): boolean {
-  if (ADMIN_UIDS.length === 0) {
-    console.warn('[Admin] ADMIN_UIDS allow-list is empty — allowing all authenticated users');
-    return true;
-  }
-  return ADMIN_UIDS.includes(uid);
-}
 
 interface ReplayReport {
   workspaceId: string;
