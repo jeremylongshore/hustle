@@ -35,7 +35,7 @@ Deploys are **fully automatic**:
 
 There is **no automatic rollback**. If the smoke test fails, a human fixes forward or reverts.
 
-**The code is far ahead of the usage.** Production has **3 user accounts, 0 athletes, 0 games, 0 workspaces**, per a row-count check against both the live DB and last night's backup on 2026-09-18. The codebase holds roughly 49,000 lines of TypeScript across 66 API routes and 40 pages, with ~900 unit tests and ~87 E2E tests. In practice we are building a product for its first real users. We are not maintaining a live system with customers, and that is the right mental model for risk. Breaking prod is cheap today; it won't be once families are on it.
+**The code is far ahead of the usage.** Production has **3 user accounts, 0 athletes, 0 games, 0 workspaces**, per a row-count check against both the live DB and last night's backup on 2026-09-18. The codebase holds roughly 49,000 lines of TypeScript across 66 API routes and 40 pages, with ~900 unit tests and 87 E2E tests (all passing locally and in CI). In practice we are building a product for its first real users. We are not maintaining a live system with customers, and that is the right mental model for risk. Breaking prod is cheap today; it won't be once families are on it.
 
 **The three biggest risks right now:**
 1. **Access control had two holes.** The admin tools failed open, and two debug routes let any signed-in user read another family's athlete biometrics and workouts. Both are fixed in PR #62, which merges first (§8.1, §9). The underlying weakness remains: most queries trust the route to have checked ownership (`hustle-4dc.2`).
@@ -760,7 +760,7 @@ Critical files:
 | `src/app/api/webhooks/stripe` | **0%** |
 
 **How to read this.** Unit coverage is strong on the pure domain rules (enforcement, limits, validation) and weak on route handlers and UI.
-- The **E2E suite** (9 specs, ~87 tests) covers much of what unit tests miss: sign-in, registration, games, athletes, Dream Gym. It isn't counted in these numbers.
+- The **E2E suite** (9 specs) covers much of what unit tests miss: sign-in, registration, games, athletes, Dream Gym. It **passed 87/87 locally on 2026-09-18** (`CI=1 npx playwright test --project=chromium`, 4.7 min) and passes in CI. It isn't counted in these numbers.
 - Real gaps with no automated test at any layer:
   - both Stripe webhooks (and they're unreachable anyway, §8.12)
   - the PIN verify brute-force path (limiter in #60)
