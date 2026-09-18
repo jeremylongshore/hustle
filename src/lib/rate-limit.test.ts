@@ -61,16 +61,21 @@ describe("RATE_LIMIT_SCALE", () => {
   let close: () => void;
   afterEach(() => { close(); vi.doUnmock("@/lib/db"); delete process.env.RATE_LIMIT_SCALE; });
 
-  it.each([["10", 30, true], ["0", 3, false], ["nonsense", 3, false]])(
-    "scale %s allows %i requests before blocking",
-    async (scale, allowedCount) => {
+  it.each([
+    ["10", "login:ip", 30],
+    ["0", "login:ip", 3],
+    ["nonsense", "login:ip", 3],
+    ["10", "games:user", 3],
+  ] as const)(
+    "scale %s on rule %s allows %i requests before blocking",
+    async (scale, name, allowedCount) => {
       vi.resetModules();
       let testDb: TestDB;
       ({ db: testDb, close } = makeTestDb());
       mockDbModule(testDb);
       process.env.RATE_LIMIT_SCALE = scale;
       const rl = await import("./rate-limit");
-      const rule = { name: "scale", max: 3, windowMs: 60_000 };
+      const rule = { name, max: 3, windowMs: 60_000 };
       for (let i = 0; i < allowedCount; i++) expect(rl.consumeRateLimit(rule, "x", 1).allowed).toBe(true);
       expect(rl.consumeRateLimit(rule, "x", 1).allowed).toBe(false);
     },

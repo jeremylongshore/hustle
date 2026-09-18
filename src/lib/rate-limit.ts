@@ -44,13 +44,16 @@ function hashIdentifier(identifier: string): string {
 
 /**
  * Test-only headroom: E2E runs sign in and register dozens of times from one IP.
- * RATE_LIMIT_SCALE (server-only env, default 1) multiplies every max. Values
- * below 1 or non-numbers are ignored, so it can only loosen limits, never
- * disable them. Production does not set it.
+ * RATE_LIMIT_SCALE (server-only env, default 1) multiplies the max of
+ * **per-IP rules only** (names ending in ":ip"). Per-user and per-email limits
+ * stay exact, so E2E still exercises real blocking. Values of 1 or less and
+ * non-numbers are ignored, so the setting can only loosen limits, never disable
+ * them. Production does not set it.
  */
-function scaledMax(max: number): number {
+function effectiveMax(rule: RateLimitRule): number {
+  if (!rule.name.endsWith(":ip")) return rule.max;
   const scale = Number(process.env.RATE_LIMIT_SCALE ?? "1");
-  return Number.isFinite(scale) && scale > 1 ? Math.floor(max * scale) : max;
+  return Number.isFinite(scale) && scale > 1 ? Math.floor(rule.max * scale) : rule.max;
 }
 
 let lastPruneAt = 0;
@@ -85,7 +88,7 @@ export function consumeRateLimit(
 
   pruneStale(now);
 
-  if (row.count <= scaledMax(rule.max)) {
+  if (row.count <= effectiveMax(rule)) {
     return { allowed: true, retryAfterMs: 0 };
   }
   return { allowed: false, retryAfterMs: Math.max(0, row.windowStart + rule.windowMs - now) };

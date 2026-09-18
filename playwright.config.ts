@@ -37,7 +37,8 @@ process.env.NEXTAUTH_URL = process.env.APP_ORIGIN;
 // Fixtures verify tokens locally; no developer-shell mail credentials are inherited.
 for (const key of ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_FROM', 'RESEND_API_KEY']) process.env[key] = '';
 process.env.NEXT_PUBLIC_E2E_TEST_MODE = 'true';
-// The suite signs in/registers many times from one IP; loosen (never disable) API rate limits.
+// The suite signs in/registers many times from one IP; loosen (never disable) per-IP rate limits.
+// Per-user/per-email limits stay exact so the games 429 test still exercises real blocking.
 process.env.RATE_LIMIT_SCALE = '1000';
 // Initialize once before Next's parallel build workers import the database.
 // Every subsequent config/worker read sees Drizzle's completed migration journal.
