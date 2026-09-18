@@ -54,7 +54,17 @@ jobs:
       - name: Determine previous tag
         id: prev
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Highest semver tag reachable from HEAD. `git describe` returned nothing in CI and
+          # fell back to a non-existent v0.0.0, which broke every later `v0.0.0..HEAD` range.
+          git fetch --tags --force --quiet origin || true
+          PREV_TAG=$(git tag --merged HEAD --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)
+          if [ -n "$PREV_TAG" ]; then
+            echo "range=$PREV_TAG..HEAD" >> $GITHUB_OUTPUT
+          else
+            PREV_TAG="v0.0.0"   # sentinel: no release yet, so the range is all of history
+            echo "range=HEAD" >> $GITHUB_OUTPUT
+          fi
+          echo "Previous release tag: $PREV_TAG"
           echo "prev=$PREV_TAG" >> $GITHUB_OUTPUT
 
       - name: Check if release needed
@@ -85,7 +95,7 @@ jobs:
             echo "type=$INPUT" >> $GITHUB_OUTPUT
             exit 0
           fi
-          RANGE="${{ steps.prev.outputs.prev }}..HEAD"
+          RANGE="${{ steps.prev.outputs.range }}"
           BRK=$(git log --pretty=%B $RANGE | grep -ciE "BREAKING CHANGE" || true)
           FEAT=$(git log --pretty=%s $RANGE | grep -ciE "^feat(\(|: )" || true)
           if [ "$BRK" -gt 0 ]; then T=major
@@ -143,7 +153,7 @@ jobs:
             echo
             echo "## Changes since $PREV"
             echo
-            git log --pretty="- %s (%h)" "$PREV"..HEAD
+            git log --pretty="- %s (%h)" ${{ steps.prev.outputs.range }}
           } > "$NOTES"
           if [ -f CHANGELOG.md ]; then
             tmp=$(mktemp)
