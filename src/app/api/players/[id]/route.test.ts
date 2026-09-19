@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   getUserProfileAdmin: vi.fn(),
   getWorkspaceByIdAdmin: vi.fn(),
   assertWorkspaceActive: vi.fn(),
+  deletePlayerUploadsLocal: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -38,6 +39,10 @@ vi.mock('@/lib/db/queries/users', () => ({
 
 vi.mock('@/lib/db/queries/workspaces', () => ({
   getWorkspaceByIdAdmin: mocks.getWorkspaceByIdAdmin,
+}));
+
+vi.mock('@/lib/storage/local', () => ({
+  deletePlayerUploadsLocal: mocks.deletePlayerUploadsLocal,
 }));
 
 vi.mock('@/lib/workspaces/enforce', () => ({
@@ -304,33 +309,23 @@ describe('DELETE /api/players/[id]', () => {
     expect(body.error).toBe('Unauthorized');
   });
 
-  it('returns 500 when user has no workspace', async () => {
-    mocks.auth.mockResolvedValue(createMockSession());
-    mocks.getUserProfileAdmin.mockResolvedValue({ defaultWorkspaceId: null });
-
-    const request = createMockRequest({ method: 'DELETE' });
-    const response = await DELETE(request, { params: PARAMS });
-    const body = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(body.error).toBe('No workspace found');
-  });
-
-  it('returns 403 when workspace is inactive', async () => {
-    const { WorkspaceAccessError } = await import('@/lib/workspaces/errors');
+  it('deletes the athlete even when the workspace is suspended (deletion right)', async () => {
     mocks.auth.mockResolvedValue(createMockSession());
     mocks.getUserProfileAdmin.mockResolvedValue({ defaultWorkspaceId: 'ws-123' });
     mocks.getWorkspaceByIdAdmin.mockResolvedValue(createMockWorkspace({ status: 'suspended' }));
     mocks.assertWorkspaceActive.mockImplementation(() => {
-      throw new WorkspaceAccessError('ACCOUNT_SUSPENDED', 'suspended');
+      throw new Error('assertWorkspaceActive must not gate athlete deletion');
     });
+    mocks.getPlayerAdmin.mockResolvedValue(PLAYER);
+    mocks.deletePlayerAdmin.mockResolvedValue(undefined);
+    mocks.deletePlayerUploadsLocal.mockResolvedValue(undefined);
 
     const request = createMockRequest({ method: 'DELETE' });
     const response = await DELETE(request, { params: PARAMS });
-    const body = await response.json();
 
-    expect(response.status).toBe(403);
-    expect(body.error).toBe('ACCOUNT_SUSPENDED');
+    expect(response.status).toBe(200);
+    expect(mocks.assertWorkspaceActive).not.toHaveBeenCalled();
+    expect(mocks.deletePlayerAdmin).toHaveBeenCalledWith('user-123', 'player-123');
   });
 
   it('returns 404 when player does not exist', async () => {
@@ -364,6 +359,7 @@ describe('DELETE /api/players/[id]', () => {
     expect(body.success).toBe(true);
     expect(body.message).toContain('Alex Smith');
     expect(mocks.deletePlayerAdmin).toHaveBeenCalledWith('user-123', 'player-123');
+    expect(mocks.deletePlayerUploadsLocal).toHaveBeenCalledWith('user-123', 'player-123');
   });
 
   it('returns 500 when deletePlayerAdmin throws', async () => {
