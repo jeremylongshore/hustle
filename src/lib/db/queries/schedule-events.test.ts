@@ -52,7 +52,16 @@ describe("schedule-events query module", () => {
   });
 
   it("filters by player id and date range", async () => {
-    const otherPlayerId = "00000000-0000-0000-0000-000000000999";
+    // A second athlete owned by the same parent (events may only reference the
+    // caller's own athletes; see ownership.test.ts for the cross-family case).
+    const { players } = await import("@/lib/db/schema/players");
+    const [{ workspaceId }] = await testDb.select({ workspaceId: players.workspaceId }).from(players).all();
+    const otherPlayerId = crypto.randomUUID();
+    await testDb.insert(players).values({
+      id: otherPlayerId, userId, workspaceId, name: "Sibling Player", birthday: new Date("2014-03-01"),
+      gender: "female", primaryPosition: "ST", leagueCode: "REC", teamClub: "Test FC",
+      createdAt: new Date(), updatedAt: new Date(),
+    });
     await qm.createScheduleEventAdmin(userId, {
       playerIds: [playerId],
       type: "game",

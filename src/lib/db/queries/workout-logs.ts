@@ -25,6 +25,7 @@ import type {
   WorkoutLogUpdateInput,
 } from "@/lib/validations/workout-log-schema";
 import { calculateTotalVolume } from "@/lib/validations/workout-log-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type WorkoutLogRow = typeof workoutLogs.$inferSelect;
 
@@ -47,10 +48,11 @@ function toWorkoutLog(row: WorkoutLogRow): WorkoutLog {
 }
 
 export async function createWorkoutLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: WorkoutLogCreateInput
 ): Promise<WorkoutLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const totalVolume = calculateTotalVolume(data.exercises);
   const now = new Date();
   const id = crypto.randomUUID();
@@ -78,10 +80,11 @@ export async function createWorkoutLogAdmin(
 }
 
 export async function getWorkoutLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<WorkoutLog | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.workoutLogs.findFirst({
     where: and(eq(workoutLogs.id, logId), eq(workoutLogs.playerId, playerId)),
   });
@@ -89,7 +92,7 @@ export async function getWorkoutLogAdmin(
 }
 
 export async function getWorkoutLogsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     type?: WorkoutLogType;
@@ -99,6 +102,7 @@ export async function getWorkoutLogsAdmin(
     cursor?: string;
   }
 ): Promise<{ logs: WorkoutLog[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 20;
   const conditions = [eq(workoutLogs.playerId, playerId)];
   if (options?.type) conditions.push(eq(workoutLogs.type, options.type));
@@ -135,11 +139,12 @@ export async function getWorkoutLogsAdmin(
 }
 
 export async function updateWorkoutLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string,
   data: WorkoutLogUpdateInput
 ): Promise<WorkoutLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof workoutLogs.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -168,17 +173,18 @@ export async function updateWorkoutLogAdmin(
 }
 
 export async function deleteWorkoutLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(workoutLogs)
     .where(and(eq(workoutLogs.id, logId), eq(workoutLogs.playerId, playerId)));
 }
 
 export async function getWorkoutStatsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     startDate?: Date;
@@ -191,6 +197,7 @@ export async function getWorkoutStatsAdmin(
   workoutsByType: Record<WorkoutLogType, number>;
   averageDuration: number;
 }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const conditions = [eq(workoutLogs.playerId, playerId)];
   if (options?.startDate) conditions.push(gte(workoutLogs.date, options.startDate));
   if (options?.endDate) conditions.push(lte(workoutLogs.date, options.endDate));

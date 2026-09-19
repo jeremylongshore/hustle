@@ -19,6 +19,7 @@ import type {
   ScheduleEventCreateInput,
   ScheduleEventUpdateInput,
 } from "@/lib/validations/schedule-event-schema";
+import { assertPlayersOwnedBy } from "@/lib/db/queries/ownership";
 
 type ScheduleEventRow = typeof scheduleEvents.$inferSelect;
 
@@ -44,6 +45,7 @@ export async function createScheduleEventAdmin(
   userId: string,
   data: ScheduleEventCreateInput
 ): Promise<ScheduleEvent> {
+  await assertPlayersOwnedBy(userId, data.playerIds ?? []);
   const now = new Date();
   const inserted = await db
     .insert(scheduleEvents)
@@ -125,7 +127,10 @@ export async function updateScheduleEventAdmin(
   if (data.location !== undefined) patch.location = data.location;
   if (data.opponent !== undefined) patch.opponent = data.opponent;
   if (data.notes !== undefined) patch.notes = data.notes;
-  if (data.playerIds !== undefined) patch.playerIds = data.playerIds;
+  if (data.playerIds !== undefined) {
+    await assertPlayersOwnedBy(userId, data.playerIds);
+    patch.playerIds = data.playerIds;
+  }
 
   const updated = await db
     .update(scheduleEvents)

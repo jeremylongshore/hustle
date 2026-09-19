@@ -16,6 +16,7 @@ import type {
   CardioLogUpdateInput,
 } from "@/lib/validations/cardio-log-schema";
 import { calculatePace } from "@/lib/validations/cardio-log-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type CardioLogRow = typeof cardioLogs.$inferSelect;
 
@@ -41,10 +42,11 @@ function toCardioLog(row: CardioLogRow): CardioLog {
 }
 
 export async function createCardioLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: CardioLogCreateInput
 ): Promise<CardioLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const avgPacePerMile =
     data.avgPacePerMile ?? calculatePace(data.distanceMiles, data.durationMinutes);
@@ -75,10 +77,11 @@ export async function createCardioLogAdmin(
 }
 
 export async function getCardioLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<CardioLog | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.cardioLogs.findFirst({
     where: and(eq(cardioLogs.id, logId), eq(cardioLogs.playerId, playerId)),
   });
@@ -86,7 +89,7 @@ export async function getCardioLogAdmin(
 }
 
 export async function getCardioLogsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     activityType?: CardioActivityType;
@@ -96,6 +99,7 @@ export async function getCardioLogsAdmin(
     cursor?: string;
   }
 ): Promise<{ logs: CardioLog[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 20;
   const conditions = [eq(cardioLogs.playerId, playerId)];
   if (options?.activityType) conditions.push(eq(cardioLogs.activityType, options.activityType));
@@ -125,11 +129,12 @@ export async function getCardioLogsAdmin(
 }
 
 export async function updateCardioLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string,
   data: CardioLogUpdateInput
 ): Promise<CardioLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof cardioLogs.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -172,17 +177,18 @@ export async function updateCardioLogAdmin(
 }
 
 export async function deleteCardioLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(cardioLogs)
     .where(and(eq(cardioLogs.id, logId), eq(cardioLogs.playerId, playerId)));
 }
 
 export async function getCardioStatsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     startDate?: Date;
@@ -197,6 +203,7 @@ export async function getCardioStatsAdmin(
   longestRun: number;
   fastestPace: string;
 }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const conditions = [eq(cardioLogs.playerId, playerId)];
   if (options?.startDate) conditions.push(gte(cardioLogs.date, options.startDate));
   if (options?.endDate) conditions.push(lte(cardioLogs.date, options.endDate));

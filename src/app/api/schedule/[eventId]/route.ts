@@ -7,6 +7,7 @@ import {
   updateScheduleEventAdmin,
   deleteScheduleEventAdmin,
 } from '@/lib/db/queries/schedule-events';
+import { isPlayerAccessError } from '@/lib/db/queries/ownership';
 
 const logger = createLogger('api/schedule/[eventId]');
 
@@ -69,6 +70,9 @@ export async function PATCH(
     logger.info('Schedule event updated', { userId: session.user.id, eventId });
     return NextResponse.json({ event });
   } catch (error) {
+    if (isPlayerAccessError(error)) {
+      return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+    }
     logger.error('Failed to update schedule event', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Failed to update schedule event' }, { status: 500 });
   }

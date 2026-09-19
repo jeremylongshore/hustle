@@ -15,6 +15,7 @@ import type {
   BiometricsLogCreateInput,
   BiometricsLogUpdateInput,
 } from "@/lib/validations/biometrics-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 export interface BiometricsTrends {
   avgRestingHeartRate: number | null;
@@ -47,10 +48,11 @@ function toBiometricsLog(row: BiometricsRow): BiometricsLog {
 }
 
 export async function createBiometricsLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: BiometricsLogCreateInput
 ): Promise<BiometricsLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const inserted = await db
     .insert(biometricsLogs)
@@ -76,10 +78,11 @@ export async function createBiometricsLogAdmin(
 }
 
 export async function getBiometricsLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<BiometricsLog | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.biometricsLogs.findFirst({
     where: and(eq(biometricsLogs.id, logId), eq(biometricsLogs.playerId, playerId)),
   });
@@ -87,7 +90,7 @@ export async function getBiometricsLogAdmin(
 }
 
 export async function getBiometricsLogsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     source?: BiometricsSource;
@@ -97,6 +100,7 @@ export async function getBiometricsLogsAdmin(
     cursor?: string;
   }
 ): Promise<{ logs: BiometricsLog[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 30;
   const conditions = [eq(biometricsLogs.playerId, playerId)];
   if (options?.source) conditions.push(eq(biometricsLogs.source, options.source));
@@ -126,11 +130,12 @@ export async function getBiometricsLogsAdmin(
 }
 
 export async function updateBiometricsLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string,
   data: BiometricsLogUpdateInput
 ): Promise<BiometricsLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof biometricsLogs.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -158,17 +163,18 @@ export async function updateBiometricsLogAdmin(
 }
 
 export async function deleteBiometricsLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(biometricsLogs)
     .where(and(eq(biometricsLogs.id, logId), eq(biometricsLogs.playerId, playerId)));
 }
 
 export async function getBiometricsTrendsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     startDate?: Date;
@@ -176,6 +182,7 @@ export async function getBiometricsTrendsAdmin(
     limit?: number;
   }
 ): Promise<BiometricsTrends> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 30;
   const conditions = [eq(biometricsLogs.playerId, playerId)];
   if (options?.startDate) conditions.push(gte(biometricsLogs.date, options.startDate));
@@ -220,10 +227,11 @@ export async function getBiometricsTrendsAdmin(
 }
 
 export async function getBiometricsLogByDateAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   date: Date
 ): Promise<BiometricsLog | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(date);

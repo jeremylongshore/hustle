@@ -21,6 +21,7 @@ import type {
   DreamGymEventClient,
   DreamGymMentalCheckInClient,
 } from "@/types/domain";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type DreamGymRow = typeof dreamGym.$inferSelect;
 
@@ -69,12 +70,13 @@ function toDreamGym(
 }
 
 export async function getDreamGymAdmin(
-  _userId: string,
+  userId: string,
   playerId: string
 ): Promise<
   | (DreamGym & { weeklyGrid?: Record<string, Record<string, string | null>> })
   | null
 > {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
   });
@@ -82,13 +84,14 @@ export async function getDreamGymAdmin(
 }
 
 export async function upsertDreamGymAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: {
     profile: DreamGymProfile;
     schedule: DreamGymSchedule;
   }
 ): Promise<DreamGym> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const existing = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
@@ -131,6 +134,7 @@ export async function getMentalCheckInsAdmin(
   playerId: string,
   limit: number = 30
 ): Promise<DreamGymMentalCheckInClient[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const dg = await getDreamGymAdmin(userId, playerId);
   if (!dg) return [];
   return dg.mental.checkIns.slice(-limit);
@@ -144,6 +148,7 @@ export async function getDreamGymEventsAdmin(
     endDate?: Date;
   }
 ): Promise<DreamGymEventClient[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const dg = await getDreamGymAdmin(userId, playerId);
   if (!dg) return [];
   let events = dg.events;
@@ -153,10 +158,11 @@ export async function getDreamGymEventsAdmin(
 }
 
 export async function addMentalCheckInAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   checkIn: Omit<DreamGymMentalCheckIn, "date">
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
   });
@@ -180,10 +186,11 @@ export async function addMentalCheckInAdmin(
 }
 
 export async function updateWeeklyGridAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   weeklyGrid: Record<string, Record<string, string | null>>
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const existing = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
@@ -238,10 +245,11 @@ type DreamGymEventInputAdmin = Omit<DreamGymEvent, "id" | "date"> & {
 };
 
 export async function addDreamGymEventAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   event: DreamGymEventInputAdmin
 ): Promise<string> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
   });
@@ -264,10 +272,11 @@ export async function addDreamGymEventAdmin(
 }
 
 export async function removeDreamGymEventAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   eventId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.dreamGym.findFirst({
     where: eq(dreamGym.playerId, playerId),
   });
