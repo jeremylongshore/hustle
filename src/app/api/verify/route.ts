@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import bcrypt from 'bcrypt'
 import { getUserProfileAdmin } from '@/lib/db/queries/users'
-import { getGameAdmin, verifyGameAdmin } from '@/lib/db/queries/games'
+import { getGameAdmin, verifyGameAdmin, AlreadyVerifiedError } from '@/lib/db/queries/games'
 import { getPlayerAdmin } from '@/lib/db/queries/players'
 import { createLogger } from '@/lib/logger'
 import { consumeRateLimit, rateLimitResponseInit, RATE_LIMITS } from '@/lib/rate-limit'
@@ -58,12 +58,8 @@ export async function POST(request: NextRequest) {
     }
     console.log('[Verify API] Game found:', game.id)
 
-    // Check if already verified
-    if (game.verified) {
-      return NextResponse.json({
-        error: 'Game already verified'
-      }, { status: 400 })
-    }
+    // "Already verified" is decided per signer by verifyGameAdmin (a coach may have
+    // signed first; the parent can still add their own signature).
 
     // Prevent verification if older than 14 days
     const fourteenDaysAgo = new Date()
@@ -116,10 +112,16 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Update game to verified using Admin SDK
-    console.log('[Verify API] Verifying game...')
-    await verifyGameAdmin(session.user.id, playerId, gameId);
-    console.log('[Verify API] Game verified successfully')
+    // Record the parent's co-signature (gameVerification row + games.verified flag)
+    let verification
+    try {
+      verification = await verifyGameAdmin(session.user.id, playerId, gameId);
+    } catch (err) {
+      if (err instanceof AlreadyVerifiedError) {
+        return NextResponse.json({ error: 'Game already verified' }, { status: 400 })
+      }
+      throw err
+    }
 
     // Get updated game for response
     const verifiedGame = await getGameAdmin(session.user.id, playerId, gameId);
@@ -136,13 +138,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Game verified successfully',
-      game: gameWithPlayer
+      game: gameWithPlayer,
+      verification
     })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Error: ' + errorMessage, error instanceof Error ? error : new Error(String(error)))
     return NextResponse.json({
-      error: `Failed to verify game: ${errorMessage}`
+      error: 'Failed to verify game'
     }, { status: 500 })
   }
 }
