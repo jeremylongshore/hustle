@@ -1,3 +1,15 @@
+# Release v2.3.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v2.2.3
+
+- chore: release v2.3.0 [skip ci] (97f8bad1)
+- Merge pull request #66 from jeremylongshore/feat/p1-query-ownership (b010e574)
+- feat(security): enforce athlete ownership in the query layer, not just in routes (bfacede7)
+
+---
+
 # Release v2.2.3
 
 **Release Date**: 2026-09-18
