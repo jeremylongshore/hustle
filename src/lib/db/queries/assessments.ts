@@ -22,6 +22,7 @@ import {
   fitnessTestMetadata,
   calculateImprovement,
 } from "@/lib/validations/assessment-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type AssessmentRow = typeof assessments.$inferSelect;
 
@@ -41,10 +42,11 @@ function toFitnessAssessment(row: AssessmentRow): FitnessAssessment {
 }
 
 export async function createAssessmentAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: FitnessAssessmentCreateInput
 ): Promise<FitnessAssessment> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const inserted = await db
     .insert(assessments)
@@ -66,10 +68,11 @@ export async function createAssessmentAdmin(
 }
 
 export async function getAssessmentAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   assessmentId: string
 ): Promise<FitnessAssessment | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.assessments.findFirst({
     where: and(eq(assessments.id, assessmentId), eq(assessments.playerId, playerId)),
   });
@@ -77,7 +80,7 @@ export async function getAssessmentAdmin(
 }
 
 export async function getAssessmentsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     testType?: FitnessTestType;
@@ -87,6 +90,7 @@ export async function getAssessmentsAdmin(
     cursor?: string;
   }
 ): Promise<{ assessments: FitnessAssessment[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 50;
   const conditions = [eq(assessments.playerId, playerId)];
   if (options?.testType) conditions.push(eq(assessments.testType, options.testType));
@@ -116,11 +120,12 @@ export async function getAssessmentsAdmin(
 }
 
 export async function updateAssessmentAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   assessmentId: string,
   data: FitnessAssessmentUpdateInput
 ): Promise<FitnessAssessment> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof assessments.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -144,19 +149,21 @@ export async function updateAssessmentAdmin(
 }
 
 export async function deleteAssessmentAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   assessmentId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(assessments)
     .where(and(eq(assessments.id, assessmentId), eq(assessments.playerId, playerId)));
 }
 
 export async function getLatestAssessmentsByTypeAdmin(
-  _userId: string,
+  userId: string,
   playerId: string
 ): Promise<Record<FitnessTestType, FitnessAssessment | null>> {
+  await assertPlayerOwnedBy(userId, playerId);
   const result: Record<FitnessTestType, FitnessAssessment | null> = {} as Record<
     FitnessTestType,
     FitnessAssessment | null
@@ -177,7 +184,7 @@ export async function getLatestAssessmentsByTypeAdmin(
 }
 
 export async function getAssessmentProgressAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   testType: FitnessTestType,
   options?: { limit?: number }
@@ -186,6 +193,7 @@ export async function getAssessmentProgressAdmin(
   improvement: { improved: boolean; percentage: number | null } | null;
   metadata: (typeof fitnessTestMetadata)[FitnessTestType];
 }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 10;
   const rows = await db
     .select()
@@ -222,6 +230,7 @@ export async function getAssessmentSummaryAdmin(
     { value: number; date: Date; percentile: number | null } | null
   >;
 }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const allRows = await db
     .select()
     .from(assessments)

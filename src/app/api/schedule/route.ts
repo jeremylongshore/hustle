@@ -9,6 +9,7 @@ import {
   createScheduleEventAdmin,
   getScheduleEventsAdmin,
 } from '@/lib/db/queries/schedule-events';
+import { isPlayerAccessError } from '@/lib/db/queries/ownership';
 
 const logger = createLogger('api/schedule');
 
@@ -76,6 +77,9 @@ export async function POST(request: NextRequest) {
     logger.info('Schedule event created', { userId: session.user.id, eventId: event.id });
     return NextResponse.json({ event }, { status: 201 });
   } catch (error) {
+    if (isPlayerAccessError(error)) {
+      return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+    }
     logger.error('Failed to create schedule event', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Failed to create schedule event' }, { status: 500 });
   }

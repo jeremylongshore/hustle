@@ -14,6 +14,7 @@ import { games } from "@/lib/db/schema/games";
 import { players } from "@/lib/db/schema/players";
 import type { Game, GameDocument } from "@/types/domain";
 import { isE2ETestMode } from "@/lib/e2e";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type GameRow = typeof games.$inferSelect;
 
@@ -114,6 +115,7 @@ export async function getVerifiedGamesAdmin(
   userId: string,
   playerId: string
 ): Promise<Game[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   // Ownership check: confirm the player belongs to userId before serving games.
   const owner = await db.query.players.findFirst({
     where: and(eq(players.id, playerId), eq(players.userId, userId)),
@@ -132,6 +134,7 @@ export async function getUnverifiedGamesAdmin(
   userId: string,
   playerId: string
 ): Promise<Game[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const owner = await db.query.players.findFirst({
     where: and(eq(players.id, playerId), eq(players.userId, userId)),
   });
@@ -149,6 +152,7 @@ export async function getAllGamesForPlayerAdmin(
   userId: string,
   playerId: string
 ): Promise<Game[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const owner = await db.query.players.findFirst({
     where: and(eq(players.id, playerId), eq(players.userId, userId)),
   });
@@ -191,7 +195,7 @@ export async function getAllGamesAdmin(
 }
 
 export async function createGameAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: {
     workspaceId: string;
@@ -212,6 +216,7 @@ export async function createGameAdmin(
     cleanSheet?: boolean | null;
   }
 ): Promise<Game> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const isE2EMode = isE2ETestMode();
 
@@ -251,6 +256,7 @@ export async function getGameAdmin(
   playerId: string,
   gameId: string
 ): Promise<Game | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const owner = await db.query.players.findFirst({
     where: and(eq(players.id, playerId), eq(players.userId, userId)),
   });
@@ -263,10 +269,11 @@ export async function getGameAdmin(
 }
 
 export async function verifyGameAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   gameId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   await db
     .update(games)
