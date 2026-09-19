@@ -26,6 +26,12 @@ const dbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "data/hu
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const sqlite = new Database(dbPath);
+// Wait (up to 10s) instead of failing with SQLITE_BUSY when another connection
+// holds the lock. next build runs several workers that each import this module
+// and run migrations against the same file; without this they collide with
+// "database is locked" (CI failure on PR #70). Also protects concurrent
+// writers at runtime.
+sqlite.pragma("busy_timeout = 10000");
 sqlite.pragma("journal_mode = WAL");
 sqlite.pragma("foreign_keys = ON");
 
