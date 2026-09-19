@@ -1,3 +1,15 @@
+# Release v3.1.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v3.0.0
+
+- chore: release v3.1.0 [skip ci] (3837e303)
+- Merge pull request #69 from jeremylongshore/feat/p1-delete-export (2a85b4ed)
+- feat(privacy): parents can delete their account and export all their data (d2d98d5a)
+
+---
+
 # Release v3.0.0
 
 **Release Date**: 2026-09-19
