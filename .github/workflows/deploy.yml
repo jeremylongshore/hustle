@@ -27,10 +27,10 @@ jobs:
     name: pre-deploy build gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Reject tracked Resend credentials before deployment
         run: python3 scripts/check-resend-secrets.py
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: "npm"
