@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Bell, Palette, Trash2, Check, AlertTriangle } from 'lucide-react';
+import { User, Bell, Palette, Trash2, Check, AlertTriangle, Download } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -89,6 +90,32 @@ export default function SettingsPage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [notifs, setNotifs] = useState(initialNotifs);
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleDeleteAccount = async () => {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword, confirmation: deleteConfirmText }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(body.message || 'Deletion failed. Nothing was removed.');
+        return;
+      }
+      await signOut({ callbackUrl: '/?accountDeleted=1' });
+    } catch {
+      setDeleteError('Deletion failed. Nothing was removed.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleProfileSave = () => {
     if (!profile.name.trim() || !profile.email.trim()) return;
@@ -249,6 +276,33 @@ export default function SettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="bg-white rounded-2xl shadow-sm overflow-hidden"
+      >
+        <div className="flex items-center justify-between gap-4 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center">
+              <Download className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-display text-sm font-semibold text-zinc-900">Download my data</p>
+              <p className="font-body text-xs text-zinc-400 mt-0.5">
+                Everything Hustle holds about you and your athletes, as a JSON file.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/api/account/export"
+            className="shrink-0 px-4 py-2 rounded-full font-display font-semibold text-sm bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
+          >
+            Download
+          </a>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.13 }}
         className="bg-white rounded-2xl shadow-sm overflow-hidden border border-red-100"
       >
@@ -302,19 +356,43 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+                <label className="block">
+                  <span className="font-display text-xs font-semibold text-zinc-700">Your password</span>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+                  />
+                </label>
+                <label className="block">
+                  <span className="font-display text-xs font-semibold text-zinc-700">Type DELETE to confirm</span>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+                  />
+                </label>
+                {deleteError && (
+                  <p role="alert" className="font-body text-xs text-red-600">{deleteError}</p>
+                )}
                 <div className="flex items-center gap-3">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setDeleteStep('idle')}
+                    onClick={() => { setDeleteStep('idle'); setDeletePassword(''); setDeleteConfirmText(''); setDeleteError(null); }}
                     className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
                   >
                     Cancel
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+                    onClick={handleDeleteAccount}
+                    disabled={deleting || !deletePassword || deleteConfirmText !== 'DELETE'}
+                    className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Yes, Delete Everything
+                    {deleting ? 'Deleting…' : 'Yes, Delete Everything'}
                   </motion.button>
                 </div>
               </motion.div>

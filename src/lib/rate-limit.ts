@@ -35,6 +35,8 @@ export const RATE_LIMITS = {
   verificationEmailByIp: { name: "verify-mail:ip", max: 10, windowMs: 60 * 60_000 },
   pinByUser: { name: "pin:user", max: 10, windowMs: 15 * 60_000 },
   gameCreateByUser: { name: "games:user", max: 10, windowMs: 60_000 },
+  accountDeleteByUser: { name: "account-delete:user", max: 5, windowMs: 15 * 60_000 },
+  accountExportByUser: { name: "account-export:user", max: 10, windowMs: 60 * 60_000 },
 } as const satisfies Record<string, RateLimitRule>;
 
 /** Hash identifiers so emails/IPs are not stored in plaintext. */

@@ -7,6 +7,7 @@ import { getWorkspaceByIdAdmin } from '@/lib/db/queries/workspaces';
 import { assertWorkspaceActive } from '@/lib/workspaces/enforce';
 import { WorkspaceAccessError } from '@/lib/workspaces/errors';
 import { playerSchema } from '@/lib/validations/player';
+import { deletePlayerUploadsLocal } from '@/lib/storage/local';
 
 const logger = createLogger('api/players/[id]');
 
@@ -189,36 +190,12 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Phase 6 Task 5: Enforce workspace status
-    const user = await getUserProfileAdmin(session.user.id);
-    if (!user?.defaultWorkspaceId) {
-      return NextResponse.json(
-        { error: 'No workspace found' },
-        { status: 500 }
-      );
-    }
+    // Deleting an athlete is always allowed, even for canceled / past-due /
+    // suspended workspaces: parents have a deletion right regardless of billing
+    // state (COPPA parental deletion, App Store 5.1.1(v)). No workspace
+    // status check here on purpose.
 
-    const workspace = await getWorkspaceByIdAdmin(user.defaultWorkspaceId);
-    if (!workspace) {
-      return NextResponse.json(
-        { error: 'Workspace not found' },
-        { status: 500 }
-      );
-    }
-
-    try {
-      assertWorkspaceActive(workspace);
-    } catch (error) {
-      if (error instanceof WorkspaceAccessError) {
-        return NextResponse.json(
-          error.toJSON(),
-          { status: error.httpStatus }
-        );
-      }
-      throw error;
-    }
-
-    // Verify player exists AND belongs to authenticated user (Firestore)
+    // Verify player exists AND belongs to authenticated user
     const existingPlayer = await getPlayerAdmin(session.user.id, id);
 
     if (!existingPlayer) {
@@ -228,8 +205,10 @@ export async function DELETE(
       );
     }
 
-    // Delete player (Firestore - CASCADE handled by security rules)
+    // Delete player: ON DELETE CASCADE removes games, logs, journal, Dream Gym, assessments.
     await deletePlayerAdmin(session.user.id, id);
+    // Remove the athlete's uploaded photos ({userId}/players/{playerId}/...).
+    await deletePlayerUploadsLocal(session.user.id, id);
 
     return NextResponse.json({
       success: true,
