@@ -1,3 +1,14 @@
+# Release v3.0.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v2.3.0
+
+- chore: release v3.0.0 [skip ci] (8c8372f0)
+- ci(deps): move GitHub actions off the node20 runtime before its removal (#68) (a50ae08c)
+
+---
+
 # Release v2.3.0
 
 **Release Date**: 2026-09-19
