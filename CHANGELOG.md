@@ -1,3 +1,16 @@
+# Release v3.2.0
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.1.1
+
+- chore: release v3.2.0 [skip ci] (b7ccc248)
+- Merge pull request #70 from jeremylongshore/feat/p1-cosign-verifications (f555ef60)
+- fix(db): set a SQLite busy timeout so parallel build workers stop colliding on migrations (39856f66)
+- feat(verified-stats): record named parent co-signatures on games (co-sign slice 1) (c9475211)
+
+---
+
 # Release v3.1.1
 
 **Release Date**: 2026-09-20
