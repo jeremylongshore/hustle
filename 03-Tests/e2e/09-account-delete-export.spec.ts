@@ -60,6 +60,18 @@ test.describe('Account export and deletion', () => {
     expect(unconfirmed.status()).toBe(400);
     expect((await page.request.get(`/api/players/${athlete.id}`)).status()).toBe(200);
 
+    // Settings shows the real signed-in parent (not demo data) and saves edits.
+    await page.goto('/dashboard/settings');
+    await expect(page.getByText(email)).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('marcus@hustlefc.com')).toHaveCount(0);
+    await page.getByLabel('First Name').fill('Renamed');
+    await page.getByLabel('Phone').fill('+1 (555) 222-3333');
+    await page.getByRole('button', { name: /Save Changes|Saving/ }).click();
+    await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible({ timeout: 30000 });
+    await page.reload();
+    await expect(page.getByLabel('First Name')).toHaveValue('Renamed', { timeout: 30000 });
+    await expect(page.getByLabel('Phone')).toHaveValue('+1 (555) 222-3333');
+
     // Delete through the real Settings UI.
     await page.goto('/dashboard/settings');
     await page.getByRole('button', { name: 'Delete', exact: true }).click();

@@ -93,6 +93,8 @@ export function ensureDefaultWorkspaceForUser(userId: string, now = new Date()) 
 export function registerUserWithWorkspace(input: {
   email: string;
   name: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   passwordHash: string;
   token: string;
   tokenExpiresAt: Date;
@@ -103,6 +105,7 @@ export function registerUserWithWorkspace(input: {
     }
     const user = tx.insert(users).values({
       email: input.email, name: input.name, passwordHash: input.passwordHash,
+      firstName: input.firstName ?? null, lastName: input.lastName ?? null,
       createdAt: now, updatedAt: now,
     }).returning().get();
     const result = provision(tx, user.id, now);
