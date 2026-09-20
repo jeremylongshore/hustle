@@ -1,3 +1,14 @@
+# Release v3.1.1
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.1.0
+
+- chore: release v3.1.1 [skip ci] (5e5bd614)
+- fix(deploy): pass HUSTLE_INTERNAL_TOKEN into the container so trial reminders stop returning 401 (#71) (15625502)
+
+---
+
 # Release v3.1.0
 
 **Release Date**: 2026-09-19
