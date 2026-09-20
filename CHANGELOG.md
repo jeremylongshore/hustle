@@ -1,3 +1,15 @@
+# Release v3.2.1
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.2.0
+
+- chore: release v3.2.1 [skip ci] (adf9a55f)
+- Merge pull request #72 from jeremylongshore/fix/p1-settings-real-profile (0297a678)
+- fix(settings): show the real parent profile and make Save actually save (c221a064)
+
+---
+
 # Release v3.2.0
 
 **Release Date**: 2026-09-20
