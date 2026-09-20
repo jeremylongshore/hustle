@@ -33,7 +33,12 @@ interface GameData {
   assists: number;
   minutesPlayed: number;
   verified?: boolean;
+  verifications?: { id: string; signerRole: 'parent' | 'coach'; signerName: string }[];
   player?: { name: string; position: string };
+}
+
+function verifiedLabel(v: NonNullable<GameData['verifications']>): string {
+  return v.map((s) => `${s.signerName} (${s.signerRole === 'coach' ? 'Coach' : 'Parent'})`).join(' · ');
 }
 
 type FilterResult = 'all' | 'Win' | 'Loss' | 'Draw';
@@ -311,6 +316,14 @@ export default function GamesPage() {
                     {game.verified === false && (
                       <span className="hidden sm:block font-body text-xs text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-full">
                         unverified
+                      </span>
+                    )}
+                    {game.verifications && game.verifications.length > 0 && (
+                      <span
+                        className="hidden sm:block font-body text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                        title={`Verified by ${verifiedLabel(game.verifications)}`}
+                      >
+                        Verified by {verifiedLabel(game.verifications)}
                       </span>
                     )}
                   </div>

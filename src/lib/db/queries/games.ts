@@ -8,11 +8,13 @@
  * players for a user becomes a single join.
  */
 
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema/games";
 import { players } from "@/lib/db/schema/players";
-import type { Game, GameDocument } from "@/types/domain";
+import { users } from "@/lib/db/schema/auth";
+import { gameVerifications } from "@/lib/db/schema/game-verifications";
+import type { Game, GameDocument, GameVerification } from "@/types/domain";
 import { isE2ETestMode } from "@/lib/e2e";
 import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
@@ -268,17 +270,88 @@ export async function getGameAdmin(
   return row ? toGame(row) : null;
 }
 
+export class AlreadyVerifiedError extends Error {
+  readonly code = "ALREADY_VERIFIED";
+  constructor() {
+    super("This game already has your signature");
+    this.name = "AlreadyVerifiedError";
+  }
+}
+
+function displayNameFor(u: { firstName: string | null; lastName: string | null; name: string | null; email: string } | undefined): string {
+  if (!u) return "Parent";
+  const full = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+  return full || u.name || u.email.split("@")[0] || "Parent";
+}
+
+/**
+ * Record the parent's co-signature (PIN-verified by the route) on a game.
+ * Writes a gameVerification row and sets the denormalized games.verified flag
+ * in one transaction. Throws AlreadyVerifiedError if this parent already signed.
+ */
 export async function verifyGameAdmin(
   userId: string,
   playerId: string,
   gameId: string
-): Promise<void> {
+): Promise<GameVerification> {
   await assertPlayerOwnedBy(userId, playerId);
+  const game = await db.query.games.findFirst({
+    where: and(eq(games.id, gameId), eq(games.playerId, playerId)),
+  });
+  if (!game) throw new Error("Game not found");
+
+  const existing = await db
+    .select({ id: gameVerifications.id })
+    .from(gameVerifications)
+    .where(and(eq(gameVerifications.gameId, gameId), eq(gameVerifications.signerRole, "parent")))
+    .get();
+  if (existing) throw new AlreadyVerifiedError();
+
+  const signer = await db.query.users.findFirst({ where: eq(users.id, userId) });
   const now = new Date();
-  await db
-    .update(games)
-    .set({ verified: true, verifiedAt: now, updatedAt: now })
-    .where(and(eq(games.id, gameId), eq(games.playerId, playerId)));
+  const row = {
+    id: crypto.randomUUID(),
+    gameId,
+    signerRole: "parent" as const,
+    signerName: displayNameFor(signer),
+    signerUserId: userId,
+    method: "pin" as const,
+    createdAt: now,
+  };
+
+  db.transaction((tx) => {
+    tx.insert(gameVerifications).values(row).run();
+    tx.update(games)
+      .set({ verified: true, verifiedAt: game.verifiedAt ?? now, updatedAt: now })
+      .where(eq(games.id, gameId))
+      .run();
+  });
+
+  return { id: row.id, signerRole: row.signerRole, signerName: row.signerName, method: row.method, createdAt: now };
+}
+
+/** Co-signatures for the given games of an owned athlete, oldest first. */
+export async function getGameVerificationsAdmin(
+  userId: string,
+  playerId: string,
+  gameIds: string[]
+): Promise<Map<string, GameVerification[]>> {
+  await assertPlayerOwnedBy(userId, playerId);
+  const out = new Map<string, GameVerification[]>();
+  if (gameIds.length === 0) return out;
+  const rows = await db
+    .select({ v: gameVerifications })
+    .from(gameVerifications)
+    .innerJoin(games, eq(games.id, gameVerifications.gameId))
+    .where(and(inArray(gameVerifications.gameId, gameIds), eq(games.playerId, playerId)))
+    .orderBy(asc(gameVerifications.createdAt))
+    .all();
+  for (const { v } of rows) {
+    const list = out.get(v.gameId) ?? [];
+    list.push({ id: v.id, signerRole: v.signerRole, signerName: v.signerName, method: v.method, createdAt: v.createdAt });
+    out.set(v.gameId, list);
+  }
+  return out;
 }
 
 // Suppress unused-imports lints

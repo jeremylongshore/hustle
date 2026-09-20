@@ -681,8 +681,19 @@ export interface Player extends Omit<PlayerDocument, 'birthday' | 'createdAt' | 
   updatedAt: Date;
 }
 
+/** One co-signature on a game (bead hustle-4dc.9). */
+export interface GameVerification {
+  id: string;
+  signerRole: 'parent' | 'coach';
+  signerName: string;
+  method: 'pin' | 'link';
+  createdAt: Date;
+}
+
 export interface Game extends Omit<GameDocument, 'date' | 'verifiedAt' | 'createdAt' | 'updatedAt'> {
   id: string;
+  /** Co-signatures (parent PIN, coach link). Present when loaded with verifications. */
+  verifications?: GameVerification[];
   date: Date;
   verifiedAt: Date | null;
   createdAt: Date;
