@@ -65,6 +65,6 @@ export async function DELETE(request: NextRequest) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Delete player photo failed', error instanceof Error ? error : undefined);
-    return NextResponse.json({ error: message || 'Failed to delete photo' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete photo' }, { status: 500 });
   }
 }

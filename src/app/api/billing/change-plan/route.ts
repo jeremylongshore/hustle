@@ -18,6 +18,7 @@ import {
 } from '@/lib/billing/plan-change';
 import { getPlanForPriceId } from '@/lib/stripe/plan-mapping';
 import { createLogger } from '@/lib/logger';
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger('api/billing/change-plan');
 
@@ -144,10 +145,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'STRIPE_ERROR',
-          message: msg || 'Stripe API error occurred',
+          // Card errors are written by Stripe for the cardholder; everything else
+          // is internal and must not reach the client (bead hustle-4dc.3).
+          message: isStripeCardError(error) ? error.message : 'Billing is temporarily unavailable. Please try again.',
           type: errType,
         },
-        { status: 500 }
+        { status: isStripeCardError(error) ? 400 : 500 }
       );
     }
 

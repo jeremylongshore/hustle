@@ -11,11 +11,9 @@ const logger = createLogger('api/verify')
 
 // POST /api/verify - Verify a game log
 export async function POST(request: NextRequest) {
-  console.log('[Verify API] Request received')
 
   try {
     const session = await auth(request);
-    console.log('[Verify API] Session:', session?.user?.id ? 'authenticated' : 'not authenticated')
 
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -26,7 +24,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { gameId, playerId, pin } = body
-    console.log('[Verify API] Request body:', { gameId, playerId, pinLength: pin?.length })
 
     if (!gameId) {
       return NextResponse.json({
@@ -47,16 +44,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get game from Firestore using Admin SDK
-    console.log('[Verify API] Fetching game...')
     const game = await getGameAdmin(session.user.id, playerId, gameId);
 
     if (!game) {
-      console.log('[Verify API] Game not found')
       return NextResponse.json({
         error: 'Game not found'
       }, { status: 404 })
     }
-    console.log('[Verify API] Game found:', game.id)
 
     // "Already verified" is decided per signer by verifyGameAdmin (a coach may have
     // signed first; the parent can still add their own signature).
@@ -71,28 +65,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify player exists using Admin SDK
-    console.log('[Verify API] Fetching player...')
     const player = await getPlayerAdmin(session.user.id, playerId);
 
     if (!player) {
-      console.log('[Verify API] Player not found')
       return NextResponse.json({
         error: 'Forbidden - Not your player'
       }, { status: 403 })
     }
-    console.log('[Verify API] Player found:', player.name)
 
     // Get user profile using Admin SDK
-    console.log('[Verify API] Fetching user profile...')
     const user = await getUserProfileAdmin(session.user.id);
 
     if (!user?.verificationPinHash) {
-      console.log('[Verify API] No PIN hash found')
       return NextResponse.json({
         error: 'Verification PIN not set. Please set up your PIN in settings.'
       }, { status: 400 })
     }
-    console.log('[Verify API] User has PIN hash')
 
     // Cap PIN guesses per user: PINs are short, so brute force is the main risk.
     const limit = consumeRateLimit(RATE_LIMITS.pinByUser, session.user.id);
@@ -102,9 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify PIN
-    console.log('[Verify API] Comparing PIN...')
     const isValidPin = await bcrypt.compare(pin, user.verificationPinHash)
-    console.log('[Verify API] PIN valid:', isValidPin)
 
     if (!isValidPin) {
       return NextResponse.json({
