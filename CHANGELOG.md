@@ -1,3 +1,14 @@
+# Release v3.3.0
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.2.2
+
+- chore: release v3.3.0 [skip ci] (975bb6ab)
+- feat(marketing): add AI-search About page (#75) (10992aff)
+
+---
+
 # Release v3.2.2
 
 **Release Date**: 2026-09-24
