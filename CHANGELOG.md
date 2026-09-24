@@ -1,3 +1,14 @@
+# Release v3.3.3
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.2
+
+- chore: release v3.3.3 [skip ci] (e7c684e3)
+- fix(api): stop returning internal error text and stop logging athlete health data (#73) (64f0824d)
+
+---
+
 # Release v3.3.2
 
 **Release Date**: 2026-09-24
