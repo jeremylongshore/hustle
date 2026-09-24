@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { motion, useInView } from 'framer-motion';
 import {
   Trophy,
@@ -505,6 +506,20 @@ function Footer() {
 export default function LandingPage() {
   return (
     <main>
+      <Script
+        src="https://analytics.intentsolutions.io/script.js"
+        data-website-id="677d7be1-466b-4f93-8958-39751d4b2c71"
+        data-domains="hustlestats.io,www.hustlestats.io"
+        data-auto-track="false"
+        data-exclude-search="true"
+        data-exclude-hash="true"
+        onReady={() => {
+          // Only the marketing landing page; no dashboard or authentication activity.
+          if (window.location.pathname !== '/') return;
+          const analytics = (window as Window & { umami?: { track: () => void } }).umami;
+          analytics?.track();
+        }}
+      />
       <Hero />
       <FeaturesSection />
       <PricingSection />
