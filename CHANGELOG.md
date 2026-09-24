@@ -1,3 +1,14 @@
+# Release v3.3.5
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.4
+
+- chore: release v3.3.5 [skip ci] (1e74e98f)
+- chore(beads): record a pending bead interaction and ignore the auto-import fingerprint (#78) (a77946f1)
+
+---
+
 # Release v3.3.4
 
 **Release Date**: 2026-09-24
