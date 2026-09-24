@@ -1,3 +1,14 @@
+# Release v3.3.4
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.3
+
+- chore: release v3.3.4 [skip ci] (f6ef3d50)
+- docs(design): parent consent records, age bands, and athlete sub-accounts (287, draft for counsel) (#67) (ff797e04)
+
+---
+
 # Release v3.3.3
 
 **Release Date**: 2026-09-24
