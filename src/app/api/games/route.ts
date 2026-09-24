@@ -6,7 +6,7 @@ import { sendEmail } from '@/lib/email'
 import { resolveAppOrigin } from '@/lib/app-origin'
 import { emailTemplates } from '@/lib/email-templates'
 import { getPlayerAdmin, getPlayersAdmin } from '@/lib/db/queries/players'
-import { getAllGamesForPlayerAdmin, createGameAdmin, getUnverifiedGamesAdmin } from '@/lib/db/queries/games'
+import { getAllGamesForPlayerAdmin, getGameVerificationsAdmin, createGameAdmin, getUnverifiedGamesAdmin } from '@/lib/db/queries/games'
 import { getUserProfileAdmin } from '@/lib/db/queries/users'
 import { getWorkspaceByIdAdmin, incrementWorkspaceGamesThisMonthAdmin } from '@/lib/db/queries/workspaces'
 import { getPlanLimits } from '@/lib/stripe/plan-mapping'
@@ -51,10 +51,16 @@ export async function GET(request: NextRequest) {
 
     // Get all games for this player from Firestore (Admin SDK)
     const games = await getAllGamesForPlayerAdmin(session.user.id, playerId);
+    const verifications = await getGameVerificationsAdmin(
+      session.user.id,
+      playerId,
+      games.map((g) => g.id)
+    );
 
-    // Format response to match Prisma structure (include player info)
+    // Format response to match Prisma structure (include player info + co-signatures)
     const gamesWithPlayer = games.map((game) => ({
       ...game,
+      verifications: verifications.get(game.id) ?? [],
       player: {
         name: player.name,
         position: player.position

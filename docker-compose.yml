@@ -15,6 +15,10 @@ services:
       # Public origin for Auth.js-generated URLs (redirects, callback URLs). Without it Auth.js
       # derives the container bind address (https://0.0.0.0:8084) from HOSTNAME/PORT.
       AUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-https://hustlestats.io}}
+      # The Stripe checkout and billing-portal return URLs read NEXTAUTH_URL and otherwise fall back
+      # to http://localhost:3000. Billing is off today (BILLING_ENABLED=false), so nothing hits that
+      # yet; this keeps it from sending customers to localhost the day billing is switched on.
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-${APP_ORIGIN:-https://hustlestats.io}}
       DATABASE_PATH: /data/hustle.db
       UPLOADS_DIR: /data/uploads
       SMTP_HOST: ${SMTP_HOST:-}
@@ -24,6 +28,10 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       APP_ORIGIN: ${APP_ORIGIN:-https://hustlestats.io}
+      # Bearer token for POST /api/internal/* (the VPS trial-reminders timer). It was never listed
+      # here: it reached the container only through a hand-edit on the VPS that the 2026-09-13
+      # deploy overwrote, and reminders returned 401 every night after. Unset = the route fails closed.
+      HUSTLE_INTERNAL_TOKEN: ${HUSTLE_INTERNAL_TOKEN:-}
       BILLING_ENABLED: ${BILLING_ENABLED:?BILLING_ENABLED must be explicitly true or false}
       # Comma-separated user IDs allowed into /api/admin/* and /dashboard/admin/*. Empty = no admins (fail closed).
       ADMIN_USER_IDS: ${ADMIN_USER_IDS:-}

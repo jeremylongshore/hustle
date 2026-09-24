@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { mealLogs } from "@/lib/db/schema/meal-logs";
 import type { MealLog, MealType } from "@/types/domain";
 import type { MealLogCreateInput } from "@/lib/validations/meal-log-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type MealLogRow = typeof mealLogs.$inferSelect;
 
@@ -30,10 +31,11 @@ function toMealLog(row: MealLogRow): MealLog {
 }
 
 export async function createMealLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: MealLogCreateInput
 ): Promise<MealLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const inserted = await db
     .insert(mealLogs)
@@ -56,7 +58,7 @@ export async function createMealLogAdmin(
 }
 
 export async function getMealLogsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     mealType?: MealType;
@@ -66,6 +68,7 @@ export async function getMealLogsAdmin(
     cursor?: string;
   }
 ): Promise<{ logs: MealLog[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 20;
   const conditions = [eq(mealLogs.playerId, playerId)];
   if (options?.mealType) conditions.push(eq(mealLogs.mealType, options.mealType));
@@ -95,10 +98,11 @@ export async function getMealLogsAdmin(
 }
 
 export async function deleteMealLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(mealLogs)
     .where(and(eq(mealLogs.id, logId), eq(mealLogs.playerId, playerId)));

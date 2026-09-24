@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Failed to send verification email.' },
+        { success: false, error: 'Failed to send verification email.' },
         { status: 500 }
       );
     }

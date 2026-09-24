@@ -18,6 +18,12 @@ import { withTimeout } from '@/lib/utils/timeout';
 
 const logger = createLogger('api/health');
 
+/** Public endpoint: report how many mail settings are missing, never their names. */
+function maskedEmailConfig() {
+  const { configured, transport, missing } = emailConfiguration();
+  return { configured, transport, missingCount: missing.length };
+}
+
 export const dynamic = 'force-dynamic';
 
 interface HealthCheckResult {
@@ -33,10 +39,10 @@ interface HealthCheckResult {
       error?: string;
       reason?: string;
     };
-    email: ReturnType<typeof emailConfiguration>;
+    email: { configured: boolean; transport: 'smtp'; missingCount: number };
     environment: {
       status: 'pass' | 'fail';
-      missing?: string[];
+      missingCount?: number;
     };
   };
   latencyMs: number;
@@ -52,7 +58,7 @@ export async function GET() {
     environment: process.env.NODE_ENV || 'development',
     service: 'hustle-api',
     checks: {
-      email: emailConfiguration(),
+      email: maskedEmailConfig(),
       database: {
         status: 'pass',
       },
@@ -88,9 +94,10 @@ export async function GET() {
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
+      // /api/health is public: report the failure, never the driver text.
       result.checks.database = {
         status: 'fail',
-        error: msg,
+        error: 'unavailable',
       };
       result.status = 'unhealthy';
       logger.error(
@@ -118,9 +125,10 @@ export async function GET() {
   const missingCritical = criticalEnvVars.filter((envVar) => !process.env[envVar]);
 
   if (missingCritical.length > 0) {
+    // Public endpoint: say how many settings are missing, not which ones.
     result.checks.environment = {
       status: 'fail',
-      missing: missingCritical,
+      missingCount: missingCritical.length,
     };
     result.status = 'unhealthy';
     logger.error(`Missing critical environment variables: ${missingCritical.join(', ')}`);

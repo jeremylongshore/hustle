@@ -157,3 +157,27 @@ export async function resolveServePath(relativePath: string): Promise<{
     return null;
   }
 }
+
+const SAFE_ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+async function removeTree(relativeDir: string): Promise<void> {
+  const root = path.resolve(/*turbopackIgnore: true*/ getStorageRoot());
+  const target = path.resolve(/*turbopackIgnore: true*/ root, relativeDir);
+  // Containment: never remove the root itself or anything outside it.
+  if (target === root || !target.startsWith(root + path.sep)) {
+    throw new Error("Refusing to remove a path outside the storage root");
+  }
+  await fs.rm(/*turbopackIgnore: true*/ target, { recursive: true, force: true });
+}
+
+/** Delete every upload belonging to a user ({userId}/...). Missing folder is fine. */
+export async function deleteUserUploadsLocal(userId: string): Promise<void> {
+  if (!SAFE_ID.test(userId)) throw new Error("Invalid user id");
+  await removeTree(userId);
+}
+
+/** Delete every upload for one athlete ({userId}/players/{playerId}/...). */
+export async function deletePlayerUploadsLocal(userId: string, playerId: string): Promise<void> {
+  if (!SAFE_ID.test(userId) || !SAFE_ID.test(playerId)) throw new Error("Invalid id");
+  await removeTree(path.posix.join(userId, "players", playerId));
+}

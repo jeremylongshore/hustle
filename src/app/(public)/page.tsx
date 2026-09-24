@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { motion, useInView } from 'framer-motion';
 import {
   Trophy,
@@ -45,6 +46,12 @@ function Hero() {
           <span className="font-display text-xl font-semibold text-white">Hustle</span>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/about"
+            className="hidden font-body text-sm text-white/80 hover:text-white transition-colors sm:inline"
+          >
+            About
+          </Link>
           <Link
             href="/login"
             className="font-body text-sm text-white/80 hover:text-white transition-colors"
@@ -287,7 +294,7 @@ function PricingSection() {
   const isInView = useInView(ref, { once: true, margin: '0px' });
 
   return (
-    <section className="py-24 px-6 bg-white">
+    <section id="pricing" className="py-24 px-6 bg-white">
       <div className="max-w-6xl mx-auto">
         <motion.div
           ref={ref}
@@ -463,13 +470,26 @@ function Footer() {
                 Product
               </p>
               <ul className="space-y-2 font-body text-sm">
-                {['Features', 'Pricing', 'Sign In'].map((l) => (
-                  <li key={l}>
-                    <a href="#" className="hover:text-white transition-colors">
-                      {l}
-                    </a>
-                  </li>
-                ))}
+                <li>
+                  <a href="#features" className="hover:text-white transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <Link href="/about" className="hover:text-white transition-colors">
+                    About
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-white transition-colors">
+                    Sign In
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -483,9 +503,9 @@ function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link href="/privacy" className="hover:text-white transition-colors">
                     Privacy
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -505,6 +525,20 @@ function Footer() {
 export default function LandingPage() {
   return (
     <main>
+      <Script
+        src="https://analytics.intentsolutions.io/script.js"
+        data-website-id="677d7be1-466b-4f93-8958-39751d4b2c71"
+        data-domains="hustlestats.io,www.hustlestats.io"
+        data-auto-track="false"
+        data-exclude-search="true"
+        data-exclude-hash="true"
+        onReady={() => {
+          // Only the marketing landing page; no dashboard or authentication activity.
+          if (window.location.pathname !== '/') return;
+          const analytics = (window as Window & { umami?: { track: () => void } }).umami;
+          analytics?.track();
+        }}
+      />
       <Hero />
       <FeaturesSection />
       <PricingSection />

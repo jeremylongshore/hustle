@@ -32,6 +32,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { emailTemplates } from "@/lib/email-templates";
 import { createLogger } from "@/lib/logger";
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger("api/webhooks/stripe");
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
         err instanceof Error ? err : new Error(msg)
       );
       return NextResponse.json(
-        { error: `Webhook signature verification failed: ${msg}` },
+        { error: 'INVALID_SIGNATURE' },
         { status: 400 }
       );
     }

@@ -16,6 +16,7 @@ import type {
   PracticeLogCreateInput,
   PracticeLogUpdateInput,
 } from "@/lib/validations/practice-log-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type PracticeLogRow = typeof practiceLogs.$inferSelect;
 
@@ -40,10 +41,11 @@ function toPracticeLog(row: PracticeLogRow): PracticeLog {
 }
 
 export async function createPracticeLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: PracticeLogCreateInput
 ): Promise<PracticeLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const inserted = await db
     .insert(practiceLogs)
@@ -70,10 +72,11 @@ export async function createPracticeLogAdmin(
 }
 
 export async function getPracticeLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<PracticeLog | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.practiceLogs.findFirst({
     where: and(eq(practiceLogs.id, logId), eq(practiceLogs.playerId, playerId)),
   });
@@ -81,7 +84,7 @@ export async function getPracticeLogAdmin(
 }
 
 export async function getPracticeLogsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     practiceType?: PracticeType;
@@ -92,6 +95,7 @@ export async function getPracticeLogsAdmin(
     cursor?: string;
   }
 ): Promise<{ logs: PracticeLog[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 20;
   const conditions = [eq(practiceLogs.playerId, playerId)];
   if (options?.practiceType) conditions.push(eq(practiceLogs.practiceType, options.practiceType));
@@ -128,11 +132,12 @@ export async function getPracticeLogsAdmin(
 }
 
 export async function updatePracticeLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string,
   data: PracticeLogUpdateInput
 ): Promise<PracticeLog> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof practiceLogs.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -161,17 +166,18 @@ export async function updatePracticeLogAdmin(
 }
 
 export async function deletePracticeLogAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   logId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(practiceLogs)
     .where(and(eq(practiceLogs.id, logId), eq(practiceLogs.playerId, playerId)));
 }
 
 export async function getPracticeStatsAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     startDate?: Date;
@@ -186,6 +192,7 @@ export async function getPracticeStatsAdmin(
   avgIntensity: number;
   avgEnjoyment: number;
 }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const conditions = [eq(practiceLogs.playerId, playerId)];
   if (options?.startDate) conditions.push(gte(practiceLogs.date, options.startDate));
   if (options?.endDate) conditions.push(lte(practiceLogs.date, options.endDate));

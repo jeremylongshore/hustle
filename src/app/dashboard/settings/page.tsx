@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Bell, Palette, Trash2, Check, AlertTriangle } from 'lucide-react';
+import { User, Bell, Palette, Trash2, Check, AlertTriangle, Download } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -13,16 +14,11 @@ interface NotifPref {
   enabled: boolean;
 }
 
-// ─── Mock data ────────────────────────────────────────────────
-const initialProfile = {
-  name: 'Marcus Okonkwo',
-  email: 'marcus@hustlefc.com',
-  phone: '+1 (555) 012-3456',
-};
-
-const initialNotifs: NotifPref[] = [
-  { id: 'game_reminders', label: 'Game Reminders', description: 'Notify me 24h before scheduled games', enabled: true },
-  { id: 'workout_reminders', label: 'Workout Reminders', description: 'Daily training schedule alerts', enabled: true },
+// Notification preferences have no backend yet: shown read-only so the page
+// never implies a setting was saved (bead hustle-4dc.10).
+const plannedNotifs: NotifPref[] = [
+  { id: 'game_reminders', label: 'Game Reminders', description: 'Notify me 24h before scheduled games', enabled: false },
+  { id: 'workout_reminders', label: 'Workout Reminders', description: 'Daily training schedule alerts', enabled: false },
   { id: 'progress_updates', label: 'Progress Updates', description: 'Weekly summary of performance stats', enabled: false },
   { id: 'team_activity', label: 'Team Activity', description: 'Alerts when teammates log sessions', enabled: false },
 ];
@@ -62,10 +58,12 @@ function Section({
 }
 
 // ─── Toggle ───────────────────────────────────────────────────
-function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+function Toggle({ enabled, onToggle, disabled = false }: { enabled: boolean; onToggle: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onToggle}
+      disabled={disabled}
+      aria-disabled={disabled}
       className={cn(
         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0',
         enabled ? 'bg-amber-500' : 'bg-zinc-200'
@@ -85,22 +83,87 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 
 // ─── Page ─────────────────────────────────────────────────────
 export default function SettingsPage() {
-  const [profile, setProfile] = useState(initialProfile);
+  const [profile, setProfile] = useState({ firstName: '', lastName: '', phone: '', email: '', emailVerified: false });
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
-  const [notifs, setNotifs] = useState(initialNotifs);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const notifs = plannedNotifs;
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleProfileSave = () => {
-    if (!profile.name.trim() || !profile.email.trim()) return;
-    console.log('Save profile:', profile);
-    setProfileSaved(true);
-    setTimeout(() => setProfileSaved(false), 2500);
+  const handleDeleteAccount = async () => {
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword, confirmation: deleteConfirmText }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(body.message || 'Deletion failed. Nothing was removed.');
+        return;
+      }
+      await signOut({ callbackUrl: '/?accountDeleted=1' });
+    } catch {
+      setDeleteError('Deletion failed. Nothing was removed.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const toggleNotif = (id: string) => {
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, enabled: !n.enabled } : n))
-    );
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/account/profile');
+        if (!res.ok) throw new Error('load failed');
+        const body = await res.json();
+        if (!cancelled) setProfile(body.profile);
+      } catch {
+        if (!cancelled) setProfileError('Could not load your profile.');
+      } finally {
+        if (!cancelled) setProfileLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleProfileSave = async () => {
+    setProfileError(null);
+    if (!profile.firstName.trim() || !profile.lastName.trim()) {
+      setProfileError('First and last name are required.');
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const res = await fetch('/api/account/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          phone: profile.phone,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setProfileError(body.message || 'Could not save your profile.');
+        return;
+      }
+      setProfile(body.profile);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2500);
+    } catch {
+      setProfileError('Could not save your profile.');
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   return (
@@ -121,28 +184,32 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5">
-                Full Name
+              <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5" htmlFor="firstName">
+                First Name
               </label>
               <input
+                id="firstName"
                 type="text"
-                value={profile.name}
+                value={profile.firstName}
+                disabled={!profileLoaded}
                 onChange={(e) => {
-                  setProfile((p) => ({ ...p, name: e.target.value }));
+                  setProfile((p) => ({ ...p, firstName: e.target.value }));
                   setProfileSaved(false);
                 }}
                 className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-white font-body text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 placeholder:text-zinc-300 transition-colors"
               />
             </div>
             <div>
-              <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5">
-                Phone
+              <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5" htmlFor="lastName">
+                Last Name
               </label>
               <input
-                type="tel"
-                value={profile.phone}
+                id="lastName"
+                type="text"
+                value={profile.lastName}
+                disabled={!profileLoaded}
                 onChange={(e) => {
-                  setProfile((p) => ({ ...p, phone: e.target.value }));
+                  setProfile((p) => ({ ...p, lastName: e.target.value }));
                   setProfileSaved(false);
                 }}
                 className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-white font-body text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 placeholder:text-zinc-300 transition-colors"
@@ -150,22 +217,36 @@ export default function SettingsPage() {
             </div>
           </div>
           <div>
-            <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5">
-              Email Address
+            <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5" htmlFor="phone">
+              Phone
             </label>
             <input
-              type="email"
-              value={profile.email}
+              id="phone"
+              type="tel"
+              value={profile.phone}
+              disabled={!profileLoaded}
               onChange={(e) => {
-                setProfile((p) => ({ ...p, email: e.target.value }));
+                setProfile((p) => ({ ...p, phone: e.target.value }));
                 setProfileSaved(false);
               }}
               className="w-full px-3 py-2.5 rounded-xl border border-zinc-200 bg-white font-body text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 placeholder:text-zinc-300 transition-colors"
             />
           </div>
+          <div>
+            <label className="block font-body text-xs font-medium text-zinc-600 mb-1.5">
+              Email Address
+            </label>
+            <p className="px-3 py-2.5 rounded-xl border border-zinc-100 bg-zinc-50 font-body text-sm text-zinc-700">
+              {profile.email || '—'}
+            </p>
+            <p className="font-body text-xs text-zinc-400 mt-1">
+              Changing your email needs re-verification. Contact support for now.
+            </p>
+          </div>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleProfileSave}
+            disabled={!profileLoaded || profileSaving}
             className={cn(
               'flex items-center gap-2 px-5 py-2.5 rounded-full font-display font-semibold text-sm transition-colors',
               profileSaved
@@ -178,9 +259,12 @@ export default function SettingsPage() {
                 <Check size={14} /> Saved
               </>
             ) : (
-              'Save Changes'
+              profileSaving ? 'Saving…' : 'Save Changes'
             )}
           </motion.button>
+          {profileError && (
+            <p role="alert" className="font-body text-xs text-red-600">{profileError}</p>
+          )}
         </div>
       </Section>
 
@@ -192,13 +276,17 @@ export default function SettingsPage() {
         delay={0.07}
       >
         <div className="space-y-4">
+          <p className="font-body text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 rounded-xl px-3 py-2">
+            Reminders aren&apos;t switched on yet. They arrive with the calendar release, and
+            you&apos;ll be able to choose which ones you get.
+          </p>
           {notifs.map((notif) => (
-            <div key={notif.id} className="flex items-center justify-between gap-4">
+            <div key={notif.id} className="flex items-center justify-between gap-4 opacity-60">
               <div className="min-w-0">
                 <p className="font-display text-sm font-semibold text-zinc-900">{notif.label}</p>
                 <p className="font-body text-xs text-zinc-400 mt-0.5">{notif.description}</p>
               </div>
-              <Toggle enabled={notif.enabled} onToggle={() => toggleNotif(notif.id)} />
+              <Toggle enabled={false} disabled onToggle={() => {}} />
             </div>
           ))}
         </div>
@@ -246,6 +334,33 @@ export default function SettingsPage() {
       </Section>
 
       {/* Danger zone */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="bg-white rounded-2xl shadow-sm overflow-hidden"
+      >
+        <div className="flex items-center justify-between gap-4 p-5">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center">
+              <Download className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="font-display text-sm font-semibold text-zinc-900">Download my data</p>
+              <p className="font-body text-xs text-zinc-400 mt-0.5">
+                Everything Hustle holds about you and your athletes, as a JSON file.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/api/account/export"
+            className="shrink-0 px-4 py-2 rounded-full font-display font-semibold text-sm bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
+          >
+            Download
+          </a>
+        </div>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -302,19 +417,43 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 </div>
+                <label className="block">
+                  <span className="font-display text-xs font-semibold text-zinc-700">Your password</span>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+                  />
+                </label>
+                <label className="block">
+                  <span className="font-display text-xs font-semibold text-zinc-700">Type DELETE to confirm</span>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+                  />
+                </label>
+                {deleteError && (
+                  <p role="alert" className="font-body text-xs text-red-600">{deleteError}</p>
+                )}
                 <div className="flex items-center gap-3">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setDeleteStep('idle')}
+                    onClick={() => { setDeleteStep('idle'); setDeletePassword(''); setDeleteConfirmText(''); setDeleteError(null); }}
                     className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
                   >
                     Cancel
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+                    onClick={handleDeleteAccount}
+                    disabled={deleting || !deletePassword || deleteConfirmText !== 'DELETE'}
+                    className="flex-1 py-2.5 rounded-full font-display font-semibold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Yes, Delete Everything
+                    {deleting ? 'Deleting…' : 'Yes, Delete Everything'}
                   </motion.button>
                 </div>
               </motion.div>

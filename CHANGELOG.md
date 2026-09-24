@@ -1,3 +1,118 @@
+# Release v3.3.2
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.1
+
+- chore: release v3.3.2 [skip ci] (0daf1526)
+- fix(build): isolate SQLite databases during page collection (#77) (a08ef765)
+
+---
+
+# Release v3.3.1
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.0
+
+- chore: release v3.3.1 [skip ci] (50fcb81e)
+- Improve About network links and CTA accessibility (#76) (ec159a4e)
+
+---
+
+# Release v3.3.0
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.2.2
+
+- chore: release v3.3.0 [skip ci] (975bb6ab)
+- feat(marketing): add AI-search About page (#75) (10992aff)
+
+---
+
+# Release v3.2.2
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.2.1
+
+- chore: release v3.2.2 [skip ci] (715c7a0f)
+- fix(analytics): measure public Hustle landing visits (#74) (571836b1)
+
+---
+
+# Release v3.2.1
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.2.0
+
+- chore: release v3.2.1 [skip ci] (adf9a55f)
+- Merge pull request #72 from jeremylongshore/fix/p1-settings-real-profile (0297a678)
+- fix(settings): show the real parent profile and make Save actually save (c221a064)
+
+---
+
+# Release v3.2.0
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.1.1
+
+- chore: release v3.2.0 [skip ci] (b7ccc248)
+- Merge pull request #70 from jeremylongshore/feat/p1-cosign-verifications (f555ef60)
+- fix(db): set a SQLite busy timeout so parallel build workers stop colliding on migrations (39856f66)
+- feat(verified-stats): record named parent co-signatures on games (co-sign slice 1) (c9475211)
+
+---
+
+# Release v3.1.1
+
+**Release Date**: 2026-09-20
+
+## Changes since v3.1.0
+
+- chore: release v3.1.1 [skip ci] (5e5bd614)
+- fix(deploy): pass HUSTLE_INTERNAL_TOKEN into the container so trial reminders stop returning 401 (#71) (15625502)
+
+---
+
+# Release v3.1.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v3.0.0
+
+- chore: release v3.1.0 [skip ci] (3837e303)
+- Merge pull request #69 from jeremylongshore/feat/p1-delete-export (2a85b4ed)
+- feat(privacy): parents can delete their account and export all their data (d2d98d5a)
+
+---
+
+# Release v3.0.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v2.3.0
+
+- chore: release v3.0.0 [skip ci] (8c8372f0)
+- ci(deps): move GitHub actions off the node20 runtime before its removal (#68) (a50ae08c)
+
+---
+
+# Release v2.3.0
+
+**Release Date**: 2026-09-19
+
+## Changes since v2.2.3
+
+- chore: release v2.3.0 [skip ci] (97f8bad1)
+- Merge pull request #66 from jeremylongshore/feat/p1-query-ownership (b010e574)
+- feat(security): enforce athlete ownership in the query layer, not just in routes (bfacede7)
+
+---
+
 # Release v2.2.3
 
 **Release Date**: 2026-09-18

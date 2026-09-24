@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const r = rateLimitResponseInit(limit);
     return NextResponse.json(r.body, r.init);
   }
-  let body: { email?: string; password?: string; name?: string };
+  let body: { email?: string; password?: string; name?: string; firstName?: string; lastName?: string };
   try {
     body = await req.json();
   } catch {
@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
 
   const email = String(body.email ?? "").toLowerCase().trim();
   const password = String(body.password ?? "");
-  const name = String(body.name ?? "").trim() || null;
+  const firstName = String(body.firstName ?? "").trim().slice(0, 60) || null;
+  const lastName = String(body.lastName ?? "").trim().slice(0, 60) || null;
+  // Keep the combined display name, but persist the parts too: /dashboard/settings
+  // and /dashboard/profile read firstName/lastName (bead hustle-4dc.10).
+  const name = String(body.name ?? "").trim() || [firstName, lastName].filter(Boolean).join(" ") || null;
 
   if (!email || !email.includes("@")) {
     return NextResponse.json({ error: "Valid email required" }, { status: 400 });
@@ -53,7 +57,7 @@ export async function POST(req: NextRequest) {
   let userId: string;
   try {
     ({ userId } = registerUserWithWorkspace({
-      email, name, passwordHash, token,
+      email, name, firstName, lastName, passwordHash, token,
       tokenExpiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
     }));
   } catch (error) {

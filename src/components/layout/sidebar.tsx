@@ -118,7 +118,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <div className="mx-3 mb-4 mt-2 p-3 bg-amber-50 rounded-xl">
         <p className="font-body text-xs font-medium text-amber-800">Free Trial</p>
         <p className="font-body text-xs text-amber-600 mt-0.5">
-          Add Firebase to unlock all features
+          Upgrade for more athletes and full Dream Gym
         </p>
       </div>
     </div>

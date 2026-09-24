@@ -16,6 +16,7 @@ import type {
   JournalEntryCreateInput,
   JournalEntryUpdateInput,
 } from "@/lib/validations/journal-schema";
+import { assertPlayerOwnedBy } from "@/lib/db/queries/ownership";
 
 type JournalRow = typeof journalEntries.$inferSelect;
 
@@ -36,10 +37,11 @@ function toJournalEntry(row: JournalRow): JournalEntry {
 }
 
 export async function createJournalEntryAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   data: JournalEntryCreateInput
 ): Promise<JournalEntry> {
+  await assertPlayerOwnedBy(userId, playerId);
   const now = new Date();
   const inserted = await db
     .insert(journalEntries)
@@ -62,10 +64,11 @@ export async function createJournalEntryAdmin(
 }
 
 export async function getJournalEntryAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   entryId: string
 ): Promise<JournalEntry | null> {
+  await assertPlayerOwnedBy(userId, playerId);
   const row = await db.query.journalEntries.findFirst({
     where: and(eq(journalEntries.id, entryId), eq(journalEntries.playerId, playerId)),
   });
@@ -73,7 +76,7 @@ export async function getJournalEntryAdmin(
 }
 
 export async function getJournalEntriesAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   options?: {
     context?: JournalContext;
@@ -84,6 +87,7 @@ export async function getJournalEntriesAdmin(
     cursor?: string;
   }
 ): Promise<{ entries: JournalEntry[]; nextCursor: string | null }> {
+  await assertPlayerOwnedBy(userId, playerId);
   const limit = options?.limit ?? 20;
   const conditions = [eq(journalEntries.playerId, playerId)];
   if (options?.context) conditions.push(eq(journalEntries.context, options.context));
@@ -114,10 +118,11 @@ export async function getJournalEntriesAdmin(
 }
 
 export async function getRecentJournalEntriesAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   limit: number = 5
 ): Promise<JournalEntry[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const rows = await db
     .select()
     .from(journalEntries)
@@ -129,11 +134,12 @@ export async function getRecentJournalEntriesAdmin(
 }
 
 export async function updateJournalEntryAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   entryId: string,
   data: JournalEntryUpdateInput
 ): Promise<JournalEntry> {
+  await assertPlayerOwnedBy(userId, playerId);
   const patch: Partial<typeof journalEntries.$inferInsert> = {
     updatedAt: new Date(),
   };
@@ -158,20 +164,22 @@ export async function updateJournalEntryAdmin(
 }
 
 export async function deleteJournalEntryAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   entryId: string
 ): Promise<void> {
+  await assertPlayerOwnedBy(userId, playerId);
   await db
     .delete(journalEntries)
     .where(and(eq(journalEntries.id, entryId), eq(journalEntries.playerId, playerId)));
 }
 
 export async function getJournalEntriesByWorkoutAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   workoutId: string
 ): Promise<JournalEntry[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const rows = await db
     .select()
     .from(journalEntries)
@@ -185,10 +193,11 @@ export async function getJournalEntriesByWorkoutAdmin(
 }
 
 export async function getJournalEntriesByGameAdmin(
-  _userId: string,
+  userId: string,
   playerId: string,
   gameId: string
 ): Promise<JournalEntry[]> {
+  await assertPlayerOwnedBy(userId, playerId);
   const rows = await db
     .select()
     .from(journalEntries)

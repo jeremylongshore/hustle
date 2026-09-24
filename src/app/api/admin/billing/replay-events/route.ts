@@ -24,6 +24,7 @@ import {
 import { enforceWorkspacePlan } from '@/lib/stripe/plan-enforcement';
 import { createLogger } from '@/lib/logger';
 import { isAdmin } from '@/lib/admin';
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger('api/admin/billing/replay-events');
 
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error : new Error(msg)
     );
     return NextResponse.json(
-      { error: 'REPLAY_FAILED', message: msg || 'Event replay failed' },
+      { error: 'REPLAY_FAILED', message: 'Event replay failed.' },
       { status: 500 }
     );
   }
