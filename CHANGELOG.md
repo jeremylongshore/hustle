@@ -1,3 +1,14 @@
+# Release v3.2.2
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.2.1
+
+- chore: release v3.2.2 [skip ci] (715c7a0f)
+- fix(analytics): measure public Hustle landing visits (#74) (571836b1)
+
+---
+
 # Release v3.2.1
 
 **Release Date**: 2026-09-20
