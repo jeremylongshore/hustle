@@ -1,3 +1,14 @@
+# Release v3.3.2
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.1
+
+- chore: release v3.3.2 [skip ci] (0daf1526)
+- fix(build): isolate SQLite databases during page collection (#77) (a08ef765)
+
+---
+
 # Release v3.3.1
 
 **Release Date**: 2026-09-24
