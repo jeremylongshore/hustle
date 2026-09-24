@@ -1,3 +1,14 @@
+# Release v3.3.1
+
+**Release Date**: 2026-09-24
+
+## Changes since v3.3.0
+
+- chore: release v3.3.1 [skip ci] (50fcb81e)
+- Improve About network links and CTA accessibility (#76) (ec159a4e)
+
+---
+
 # Release v3.3.0
 
 **Release Date**: 2026-09-24
