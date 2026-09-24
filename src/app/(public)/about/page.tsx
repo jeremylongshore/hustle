@@ -16,13 +16,13 @@ export const metadata: Metadata = {
 };
 
 const network = [
-  ["Intent Solutions", "https://intentsolutions.io"],
-  ["OMA", "https://oma.intentsolutions.io"],
-  ["Intent Learn", "https://learn.intentsolutions.io"],
-  ["Intent Demos", "https://demos.intentsolutions.io"],
-  ["Tons of Skills", "https://tonsofskills.com"],
-  ["Start AI Tools", "https://startaitools.com"],
-  ["DiagnosticPro", "https://diagnosticpro.io"],
+  ["Intent Solutions", "https://intentsolutions.io/about/"],
+  ["OMA", "https://oma.intentsolutions.io/about/"],
+  ["Intent Learn", "https://learn.intentsolutions.io/page/about-us"],
+  ["Intent Demos", "https://demos.intentsolutions.io/about/"],
+  ["Tons of Skills", "https://tonsofskills.com/about/"],
+  ["Start AI Tools", "https://startaitools.com/about/"],
+  ["DiagnosticPro", "https://diagnosticpro.io/about/"],
 ] as const;
 
 const faq = [
@@ -76,6 +76,27 @@ const faqJsonLd = {
   })),
 };
 
+function NetworkLinks({ inverse = false }: { inverse?: boolean }) {
+  return (
+    <p
+      className={`mt-6 font-body text-sm leading-relaxed ${inverse ? "text-zinc-300" : "text-zinc-600"}`}
+    >
+      Network:{" "}
+      {network.map(([label, href], index) => (
+        <span key={href}>
+          {index > 0 ? " · " : ""}
+          <a
+            href={href}
+            className={`underline underline-offset-4 ${inverse ? "hover:text-white" : "hover:text-zinc-950"}`}
+          >
+            {label}
+          </a>
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function SiteHeader() {
   return (
     <header className="border-b border-zinc-200 bg-white">
@@ -109,19 +130,14 @@ function SiteHeader() {
 }
 
 function SectionHeading({
-  eyebrow,
   children,
   inverse = false,
 }: {
-  eyebrow: string;
   children: React.ReactNode;
   inverse?: boolean;
 }) {
   return (
     <div className="mb-10 max-w-3xl">
-      <p className="mb-3 font-body text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-        {eyebrow}
-      </p>
       <h2
         className={`font-display text-3xl font-semibold tracking-tight md:text-4xl ${
           inverse ? "text-white" : "text-zinc-950"
@@ -146,9 +162,6 @@ export default function AboutPage() {
 
       <section className="border-b border-zinc-200 bg-[#E8DCC8] px-6 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">
-          <p className="mb-5 font-body text-xs font-semibold uppercase tracking-[0.22em] text-amber-800">
-            Intent Solutions network / youth soccer
-          </p>
           <h1 className="max-w-4xl font-display text-5xl font-semibold leading-[0.95] tracking-tight text-zinc-950 md:text-7xl">
             About HustleStats
           </h1>
@@ -164,7 +177,7 @@ export default function AboutPage() {
           </p>
           <Link
             href="/register"
-            className="mt-9 inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 font-display font-semibold text-white transition-colors hover:bg-amber-600"
+            className="mt-9 inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 font-display font-semibold text-zinc-950 transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
           >
             Start free
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -174,9 +187,7 @@ export default function AboutPage() {
 
       <section className="px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="The product">
-            What HustleStats does
-          </SectionHeading>
+          <SectionHeading>What HustleStats does</SectionHeading>
           <div className="grid gap-x-12 gap-y-10 md:grid-cols-2">
             <article className="border-t border-zinc-300 pt-6">
               <h3 className="font-display text-2xl font-semibold">
@@ -228,9 +239,7 @@ export default function AboutPage() {
 
       <section className="border-y border-zinc-200 bg-white px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="The operating choices">
-            What makes HustleStats different
-          </SectionHeading>
+          <SectionHeading>What makes HustleStats different</SectionHeading>
           <div className="divide-y divide-zinc-200 border-y border-zinc-200">
             <article className="grid gap-3 py-7 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-12">
               <h3 className="font-display text-xl font-semibold">
@@ -248,10 +257,16 @@ export default function AboutPage() {
                 Athlete development comes first
               </h3>
               <p className="font-body leading-relaxed text-zinc-600">
-                TeamSnap centers team scheduling and communication, while
-                HustleStats centers an individual athlete&apos;s development
-                record. Games, practices, training, and reflections remain
-                connected to that athlete across the season.
+                <a
+                  href="https://www.teamsnap.com/teams"
+                  className="underline underline-offset-4"
+                >
+                  TeamSnap
+                </a>{" "}
+                centers team scheduling and communication, while HustleStats
+                centers an individual athlete&apos;s development record. Games,
+                practices, training, and reflections remain connected to that
+                athlete across the season.
               </p>
             </article>
             <article className="grid gap-3 py-7 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:gap-12">
@@ -293,9 +308,7 @@ export default function AboutPage() {
 
       <section className="px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="Who it serves">
-            Who uses HustleStats
-          </SectionHeading>
+          <SectionHeading>Who uses HustleStats</SectionHeading>
           <ul className="grid gap-4 font-body text-lg text-zinc-700 md:grid-cols-2">
             <li className="border-l-2 border-amber-500 pl-5">
               Parents and legal guardians managing soccer-development records
@@ -319,9 +332,7 @@ export default function AboutPage() {
 
       <section className="border-y border-zinc-200 bg-zinc-950 px-6 py-20 text-white md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="Ownership" inverse>
-            The team behind HustleStats
-          </SectionHeading>
+          <SectionHeading inverse>The team behind HustleStats</SectionHeading>
           <div className="grid gap-12 md:grid-cols-2">
             <article>
               <h3 className="font-display text-2xl font-semibold">
@@ -357,21 +368,20 @@ export default function AboutPage() {
               <p className="mt-4 font-body text-sm text-zinc-400">
                 <a
                   className="underline decoration-zinc-600 underline-offset-4 hover:text-white"
-                  href="https://intentsolutions.io"
+                  href="https://intentsolutions.io/about/"
                 >
                   Visit Intent Solutions
                 </a>
               </p>
             </article>
           </div>
+          <NetworkLinks inverse />
         </div>
       </section>
 
       <section className="px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="The family workflow">
-            How HustleStats works
-          </SectionHeading>
+          <SectionHeading>How HustleStats works</SectionHeading>
           <ol className="grid gap-8 md:grid-cols-2">
             <li className="border-t border-zinc-300 pt-5">
               <p className="font-body text-sm font-semibold text-amber-700">
@@ -435,7 +445,7 @@ export default function AboutPage() {
 
       <section className="border-y border-zinc-200 bg-white px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="Entity record">Key facts</SectionHeading>
+          <SectionHeading>Key facts</SectionHeading>
           <div className="overflow-x-auto border-y border-zinc-200">
             <table className="w-full border-collapse text-left font-body text-sm">
               <tbody className="divide-y divide-zinc-200">
@@ -468,10 +478,7 @@ export default function AboutPage() {
                   ],
                   ["Notable Clients", "[[PUBLICLY_NAMED_CLIENTS]]"],
                   ["Customers Served", "[[VERIFIED_FAMILIES_SERVED]]"],
-                  [
-                    "Projects Delivered",
-                    "[[VERIFIED_ATHLETE_RECORDS_CREATED]]",
-                  ],
+                  ["Projects Delivered", "[[VERIFIED_PROJECTS_DELIVERED]]"],
                   [
                     "Competitors",
                     "TeamSnap, Hudl, SportsRecruits, and NCSA are category alternatives",
@@ -519,9 +526,7 @@ export default function AboutPage() {
 
       <section className="px-6 py-20 md:py-24">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="Practical answers">
-            Frequently asked questions
-          </SectionHeading>
+          <SectionHeading>Frequently asked questions</SectionHeading>
           <div className="divide-y divide-zinc-300 border-y border-zinc-300">
             {faq.map((item) => (
               <article
@@ -537,6 +542,7 @@ export default function AboutPage() {
               </article>
             ))}
           </div>
+          <NetworkLinks />
           <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-zinc-300 pt-8 sm:flex-row sm:items-center">
             <div>
               <p className="font-display text-2xl font-semibold">
@@ -548,7 +554,7 @@ export default function AboutPage() {
             </div>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 font-display font-semibold text-white transition-colors hover:bg-amber-600"
+              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 font-display font-semibold text-zinc-950 transition-colors hover:bg-amber-400 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-zinc-950"
             >
               Start free
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -581,7 +587,10 @@ export default function AboutPage() {
             <Link href="/terms" className="hover:text-white">
               Terms
             </Link>
-            <a href="https://intentsolutions.io" className="hover:text-white">
+            <a
+              href="https://intentsolutions.io/about/"
+              className="hover:text-white"
+            >
               Intent Solutions
             </a>
           </nav>
