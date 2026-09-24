@@ -35,7 +35,7 @@ describe('Auth.js request guard regression', () => {
     expect(target.pathname).toBe('/login');
     expect(target.searchParams.get('callbackUrl')).toBe('/dashboard/games?season=2026');
   });
-  it.each(['/login', '/register', '/api/auth/session', '/api/healthz', '/api/internal/example'])('preserves public or independently authorized route %s', async (pathname) => {
+  it.each(['/about', '/login', '/register', '/api/auth/session', '/api/healthz', '/api/internal/example'])('preserves public or independently authorized route %s', async (pathname) => {
     vi.stubEnv('AUTH_SECRET', '');
     expect((await proxy(new NextRequest(`http://localhost${pathname}`))).headers.get('x-middleware-next')).toBe('1');
   });
