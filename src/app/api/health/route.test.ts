@@ -77,7 +77,9 @@ describe("GET /api/health", () => {
     const body = await res.json();
     expect(res.status).toBe(503);
     expect(body.status).toBe("unhealthy");
-    expect(body.checks.environment.missing).toContain("STRIPE_SECRET_KEY");
+    // Public endpoint: a count, never the setting names (bead hustle-4dc.3).
+    expect(body.checks.environment.missingCount).toBeGreaterThan(0);
+    expect(JSON.stringify(body)).not.toContain("STRIPE_SECRET_KEY");
   });
 
   it("does not require STRIPE_SECRET_KEY when billing disabled", async () => {
@@ -100,7 +102,8 @@ describe("GET /api/health", () => {
     const body = await res.json();
     expect(res.status).toBe(503);
     expect(body.status).toBe("degraded");
-    expect(body.checks.email.missing).toEqual(["SMTP_PASS"]);
+    expect(body.checks.email.missingCount).toBe(1);
+    expect(JSON.stringify(body)).not.toContain("SMTP_PASS");
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 

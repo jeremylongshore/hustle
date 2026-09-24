@@ -68,11 +68,6 @@ export async function GET(
       cursor: queryParams.cursor,
     };
 
-    console.log('[WORKOUT-LOG-GET] Fetching workout logs:', {
-      userId: session.user.id,
-      playerId,
-      options,
-    });
 
     const { logs, nextCursor } = await getWorkoutLogsAdmin(
       session.user.id,
@@ -80,10 +75,6 @@ export async function GET(
       options
     );
 
-    console.log('[WORKOUT-LOG-GET] Found logs:', {
-      count: logs.length,
-      logIds: logs.map(l => l.id),
-    });
 
     return NextResponse.json({
       success: true,
@@ -135,13 +126,6 @@ export async function POST(
       playerId, // Inject from URL
     };
 
-    console.log('[WORKOUT-LOG-CREATE] Validating payload:', JSON.stringify({
-      playerId: dataToValidate.playerId,
-      type: dataToValidate.type,
-      title: dataToValidate.title,
-      duration: dataToValidate.duration,
-      exerciseCount: dataToValidate.exercises?.length,
-    }));
 
     const validationResult = workoutLogCreateSchema.safeParse(dataToValidate);
 
@@ -153,12 +137,6 @@ export async function POST(
       );
     }
 
-    console.log('[WORKOUT-LOG-CREATE] Creating workout log:', {
-      userId: session.user.id,
-      playerId,
-      title: validationResult.data.title,
-      exerciseCount: validationResult.data.exercises.length,
-    });
 
     const workoutLog = await createWorkoutLogAdmin(
       session.user.id,
@@ -166,10 +144,6 @@ export async function POST(
       validationResult.data
     );
 
-    console.log('[WORKOUT-LOG-CREATE] Successfully created:', {
-      workoutLogId: workoutLog.id,
-      title: workoutLog.title,
-    });
 
     return NextResponse.json({
       success: true,

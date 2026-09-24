@@ -7,7 +7,8 @@ interface EmailHealth {
   checkedAt: string;
   validUntil: string;
   category?: EmailDeliveryError['category'];
-  missing?: string[];
+  /** Count only: the names of unset mail settings stay in the logs (bead hustle-4dc.3). */
+  missingCount?: number;
 }
 
 let cached: EmailHealth | undefined;
@@ -21,7 +22,7 @@ export async function emailHealth(): Promise<EmailHealth> {
   const base = { transport: 'smtp' as const, check: 'tls-authentication' as const };
   if (!config.configured) {
     cached = undefined;
-    return { ...base, ...stamp(), status: 'fail', category: 'configuration', missing: config.missing };
+    return { ...base, ...stamp(), status: 'fail', category: 'configuration', missingCount: config.missing.length };
   }
   if (cached && Date.parse(cached.validUntil) > Date.now()) return cached;
   if (inFlight) return inFlight;

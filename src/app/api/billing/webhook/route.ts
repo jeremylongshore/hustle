@@ -28,6 +28,7 @@ import {
 } from "@/lib/db/queries/stripe-billing";
 import { enforceWorkspacePlan } from "@/lib/stripe/plan-enforcement";
 import { createLogger } from "@/lib/logger";
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger("api/billing/webhook");
 
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       }
     }
     return NextResponse.json(
-      { error: "Webhook processing failed", details: msg },
+      { error: "WEBHOOK_PROCESSING_FAILED" },
       { status: 500 }
     );
   }

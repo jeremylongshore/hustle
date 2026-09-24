@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from '@/lib/ai/claude';
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 // ─── System prompts (persona/role) ───────────────────────────
 
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
     console.error('[/api/ai/recommend] ERROR:', msg);
     // Return the raw error in the response body so it's visible in browser DevTools
     return NextResponse.json(
-      { error: 'AI request failed', detail: msg },
+      { error: 'AI_REQUEST_FAILED', message: 'The coach could not generate a suggestion right now.' },
       { status: 500 },
     );
   }

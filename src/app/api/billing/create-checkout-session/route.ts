@@ -14,6 +14,7 @@ import {
 } from '@/lib/db/queries/workspaces';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger('api/billing/create-checkout-session');
 
@@ -123,21 +124,18 @@ export async function POST(request: NextRequest) {
     // Handle Stripe-specific errors
     if (error.type === 'StripeCardError') {
       return NextResponse.json(
-        { error: 'Card error', details: error.message },
+        { error: 'CARD_ERROR', message: error.message },
         { status: 400 }
       );
     }
 
     if (error.type === 'StripeInvalidRequestError') {
       return NextResponse.json(
-        { error: 'Invalid request to Stripe', details: error.message },
+        { error: 'INVALID_REQUEST', message: 'That plan is not available right now.' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
+    return serverError(logger, 'Stripe checkout session creation failed', error, 'Could not start checkout. Please try again.');
   }
 }

@@ -17,6 +17,7 @@ import {
   isValidStripeCustomerId,
 } from '@/lib/stripe/customer-portal';
 import { createLogger } from '@/lib/logger';
+import { serverError, isStripeCardError } from '@/lib/api/errors';
 
 const logger = createLogger('api/billing/create-portal-session');
 
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'STRIPE_ERROR',
-          message: msg || 'Failed to create portal session',
+          message: isStripeCardError(error) ? error.message : 'Billing is temporarily unavailable. Please try again.',
           type: errType,
         },
         { status: 500 }

@@ -54,7 +54,9 @@ it('fails a configuration change immediately without opening a connection', asyn
   const { emailHealth } = await import('./email-health');
   await emailHealth();
   vi.stubEnv('SMTP_PASS', '');
-  expect(await emailHealth()).toMatchObject({ status: 'fail', category: 'configuration', missing: ['SMTP_PASS'] });
+  const health = await emailHealth();
+  expect(health).toMatchObject({ status: 'fail', category: 'configuration', missingCount: 1 });
+  expect(JSON.stringify(health)).not.toContain('SMTP_PASS');
   expect(probe).toHaveBeenCalledTimes(1);
 });
 
