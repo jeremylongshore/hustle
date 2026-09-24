@@ -41,7 +41,10 @@ ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SEN
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+# Next imports database modules in parallel while collecting page data.
+# Build workers use independent disposable databases; the runner below keeps
+# DATABASE_PATH=/data/hustle.db for persistent application data.
+RUN DATABASE_PATH=:memory: npm run build
 
 # ─────────────────────────── runner ───────────────────────────
 FROM node:22-bookworm-slim AS runner
