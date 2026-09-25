@@ -1,3 +1,14 @@
+# Release v3.3.6
+
+**Release Date**: 2026-09-25
+
+## Changes since v3.3.5
+
+- chore: release v3.3.6 [skip ci] (8df56875)
+- ci(deps): pin the installers and actions CI resolves at run time (#79) (7f852406)
+
+---
+
 # Release v3.3.5
 
 **Release Date**: 2026-09-24
