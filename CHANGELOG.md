@@ -1,3 +1,14 @@
+# Release v3.3.7
+
+**Release Date**: 2026-09-29
+
+## Changes since v3.3.6
+
+- chore: release v3.3.7 [skip ci] (11be2e10)
+- fix(site): link visitors to the company team (#82) (fa56cf5a)
+
+---
+
 # Release v3.3.6
 
 **Release Date**: 2026-09-25
