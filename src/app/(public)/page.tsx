@@ -486,6 +486,11 @@ function Footer() {
                   </Link>
                 </li>
                 <li>
+                  <a href="https://intentsolutions.io/about/#team" className="hover:text-white transition-colors">
+                    Our team
+                  </a>
+                </li>
+                <li>
                   <Link href="/login" className="hover:text-white transition-colors">
                     Sign In
                   </Link>
