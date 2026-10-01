@@ -463,6 +463,11 @@ function Footer() {
             <p className="font-body text-sm max-w-xs">
               Youth soccer performance tracking for parents and coaches.
             </p>
+            <p className="mt-4 max-w-xs font-body text-sm leading-relaxed">
+              Built by Intent Solutions, where engineering, evidence, and practical
+              knowledge feed the next product. {" "}
+              <a href="https://startaitools.com/deployment-thesis/" className="underline underline-offset-4 hover:text-white">How the work connects</a>.
+            </p>
           </div>
           <div className="flex gap-12">
             <div>

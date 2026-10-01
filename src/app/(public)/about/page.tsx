@@ -54,7 +54,7 @@ const faq = [
   {
     question: "How does HustleStats relate to Intent Solutions?",
     answer:
-      "HustleStats is built and operated by Intent Solutions, the accountable AI implementation practice founded by Jeremy Longshore. It sits in the same network as Intent Demos, Intent Learn, Tons of Skills, OMA, Start AI Tools, and DiagnosticPro.",
+      "HustleStats is a product built and operated by Intent Solutions, the applied AI engineering company founded by Jeremy Longshore. The company connects engineering, evaluations, working demos, practical education, and reusable tools; HustleStats applies that operating discipline to youth soccer records, with its own product terms and parent-controlled accounts.",
   },
   {
     question: "Where can I inspect the evidence or source?",
@@ -363,7 +363,14 @@ export default function AboutPage() {
                 a practical, parent-controlled record of development. The
                 product follows the company&apos;s operating method: frame the
                 outcome, build the system, prove behavior with evidence, and
-                keep an owner on operation.
+                keep an owner on operation. Useful lessons can inform the company&apos;s
+                evaluations, teaching, and reusable tools without making family
+                records public.
+              </p>
+              <p className="mt-4 font-body text-sm text-zinc-300">
+                <a href="https://startaitools.com/deployment-thesis/" className="underline underline-offset-4 hover:text-white">
+                  How the company&apos;s engineering, evidence, and teaching connect
+                </a>
               </p>
               <p className="mt-4 font-body text-sm text-zinc-400">
                 <a
