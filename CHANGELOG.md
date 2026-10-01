@@ -1,3 +1,14 @@
+# Release v3.4.0
+
+**Release Date**: 2026-10-01
+
+## Changes since v3.3.7
+
+- chore: release v3.4.0 [skip ci] (dfd794e6)
+- feat: connect HustleStats to the company engineering method (#83) (7bc3d1b3)
+
+---
+
 # Release v3.3.7
 
 **Release Date**: 2026-09-29
