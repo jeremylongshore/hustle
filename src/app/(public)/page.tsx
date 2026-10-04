@@ -79,19 +79,19 @@ function Hero() {
           Youth Soccer Performance Platform
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-8">
+        <h1 className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-8">
           {words.map((word, i) => (
-            <motion.h1
+            <motion.span
               key={word}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 + i * 0.12 }}
               className="font-display text-6xl md:text-8xl font-semibold text-white leading-tight"
             >
-              {word}
-            </motion.h1>
+              {word}{i < words.length - 1 ? ' ' : ''}
+            </motion.span>
           ))}
-        </div>
+        </h1>
 
         <motion.p
           initial={{ opacity: 0 }}

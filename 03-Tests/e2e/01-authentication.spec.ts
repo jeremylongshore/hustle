@@ -16,10 +16,11 @@ test.describe('Authentication Flow', () => {
     // Check page title contains "Hustle"
     await expect(page).toHaveTitle(/Hustle/i);
 
-    // Check landing page has main heading
-    for (const title of ['Track.', 'Train.', 'Dominate.']) {
-      await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
-    }
+    // The animated hero words form one main heading.
+    const mainHeading = page.getByRole('heading', { level: 1 });
+    await expect(mainHeading).toHaveCount(1);
+    await expect(mainHeading).toHaveText('Track. Train. Dominate.');
+    await expect(mainHeading).toBeVisible();
   });
 
   test('should show login page', async ({ page }) => {
