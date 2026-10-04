@@ -1,3 +1,14 @@
+# Release v3.4.1
+
+**Release Date**: 2026-10-04
+
+## Changes since v3.4.0
+
+- chore: release v3.4.1 [skip ci] (6c0a370e)
+- fix(a11y): combine homepage hero into one heading (#84) (5a6ed445)
+
+---
+
 # Release v3.4.0
 
 **Release Date**: 2026-10-01
