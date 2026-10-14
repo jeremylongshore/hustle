@@ -1,3 +1,14 @@
+# Release v3.5.0
+
+**Release Date**: 2026-10-14
+
+## Changes since v3.4.1
+
+- chore: release v3.5.0 [skip ci] (b296d371)
+- feat: display official Intent Solutions Select partner artwork (#85) (ce40d9ba)
+
+---
+
 # Release v3.4.1
 
 **Release Date**: 2026-10-04
