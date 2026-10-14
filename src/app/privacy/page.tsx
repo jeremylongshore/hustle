@@ -1,3 +1,4 @@
+import IntentPartner from '@/components/IntentPartner';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -16,6 +17,7 @@ export default function PrivacyPolicy() {
           </Link>
         </div>
       </header>
+      <IntentPartner />
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-12">

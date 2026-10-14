@@ -9,6 +9,13 @@ First, run the development server:
 ```bash
 npm run dev
 # or
+
+<!-- intent-select-partner:start -->
+<p><a href="https://intentsolutions.io/"><img src="assets/brand/claude-select-partner.svg" alt="Intent Solutions: Claude Partner Network Select Services Partner" width="300" height="95" /></a></p>
+
+Intent Solutions is a Claude Partner Network Select Services Partner.
+<!-- intent-select-partner:end -->
+
 yarn dev
 # or
 pnpm dev
