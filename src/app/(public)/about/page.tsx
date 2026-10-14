@@ -1,3 +1,4 @@
+import IntentPartner from '@/components/IntentPartner';
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
@@ -159,6 +160,7 @@ export default function AboutPage() {
         }}
       />
       <SiteHeader />
+      <IntentPartner />
 
       <section className="border-b border-zinc-200 bg-[#E8DCC8] px-6 py-20 md:py-28">
         <div className="mx-auto max-w-6xl">

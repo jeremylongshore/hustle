@@ -1,5 +1,7 @@
 'use client';
 
+import IntentPartner from '@/components/IntentPartner';
+
 import { useRef } from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -24,7 +26,7 @@ function Hero() {
   const words = ['Track.', 'Train.', 'Dominate.'];
 
   return (
-    <section className="relative h-dvh min-h-[600px] overflow-hidden">
+    <section className="relative flex min-h-[calc(100svh-89px)] flex-col overflow-hidden">
       {/* Video bg */}
       <video
         autoPlay
@@ -68,7 +70,7 @@ function Hero() {
       </nav>
 
       {/* Hero content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center pb-20">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 text-center py-10">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -549,6 +551,7 @@ export default function LandingPage() {
           analytics?.track();
         }}
       />
+      <IntentPartner />
       <Hero />
       <FeaturesSection />
       <PricingSection />
