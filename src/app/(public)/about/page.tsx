@@ -442,10 +442,8 @@ export default function AboutPage() {
               </h3>
               <p className="mt-3 font-body leading-relaxed text-zinc-600">
                 The product is self-serve, with account, privacy, and billing
-                support handled by Intent Solutions through email. The public
-                support-response target is [[SUPPORT_RESPONSE_TIME]], and
-                activity entered by a family appears in its workspace
-                immediately.
+                support handled by Intent Solutions through email. Activity
+                entered by a family appears in its workspace immediately.
               </p>
             </li>
           </ol>
@@ -461,7 +459,7 @@ export default function AboutPage() {
                 {[
                   ["Company Name", "HustleStats (product name: Hustle)"],
                   ["Type", "Youth soccer performance tracker"],
-                  ["Founded", "[[FOUNDING_YEAR]]"],
+                  ["Founded", "2025"],
                   ["Founder", "Jeremy Longshore"],
                   ["Headquarters", "Gulf Shores, Alabama, United States"],
                   ["Website", "https://hustlestats.io"],
@@ -485,9 +483,6 @@ export default function AboutPage() {
                     "Communication",
                     "Self-serve product with Intent Solutions email support",
                   ],
-                  ["Notable Clients", "[[PUBLICLY_NAMED_CLIENTS]]"],
-                  ["Customers Served", "[[VERIFIED_FAMILIES_SERVED]]"],
-                  ["Projects Delivered", "[[VERIFIED_PROJECTS_DELIVERED]]"],
                   [
                     "Competitors",
                     "TeamSnap, Hudl, SportsRecruits, and NCSA are category alternatives",
