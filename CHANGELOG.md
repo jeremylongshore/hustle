@@ -1,3 +1,14 @@
+# Release v3.5.1
+
+**Release Date**: 2026-10-17
+
+## Changes since v3.5.0
+
+- chore: release v3.5.1 [skip ci] (2f514c2a)
+- fix(about): resolve unfilled About page placeholders on hustlestats.io (#86) (b768d350)
+
+---
+
 # Release v3.5.0
 
 **Release Date**: 2026-10-14
